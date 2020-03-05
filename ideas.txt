@@ -1,0 +1,5 @@
+\ [ ] essential functions
+\ [ ] basic repl with game porthole
+\ [ ] game mode
+\ [ ] graphics system - images plus extra data ... see gfx.txt
+\ [ ] save/load "project"
