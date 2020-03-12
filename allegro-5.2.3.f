@@ -2513,10 +2513,10 @@ LIBRARY: allegro_monolith-5.2.3.dll
 \ extern "C" al_append_native_text_log( );
 \ extern "C" al_append_path_component( );
 \ extern "C" al_apply_window_constraints( );
-\ extern "C" al_attach_audio_stream_to_mixer( );
+extern "C" int al_attach_audio_stream_to_mixer( void * stream, void * mixer );
 \ extern "C" al_attach_audio_stream_to_voice( );
 \ extern "C" al_attach_mixer_to_mixer( );
-\ extern "C" al_attach_mixer_to_voice( );
+extern "C" bool al_attach_mixer_to_voice( void * mixer, void * voice );
 \ extern "C" al_attach_sample_instance_to_mixer( );
 \ extern "C" al_attach_sample_instance_to_voice( );
 \ extern "C" al_attach_shader_source( );
@@ -2593,7 +2593,7 @@ extern "C" void * al_create_display( uint w, uint h );
 \ extern "C" al_create_fs_entry( );
 \ extern "C" al_create_index_buffer( );
 \ extern "C" al_create_menu( );
-\ extern "C" al_create_mixer( );
+extern "C" void * al_create_mixer( int rate, int depth, int conf );
 \ extern "C" al_create_mouse_cursor( );
 \ extern "C" al_create_mutex( );
 \ extern "C" al_create_mutex_recursive( );
@@ -2609,12 +2609,12 @@ extern "C" void * al_create_display( uint w, uint h );
 \ extern "C" al_create_timer( );
 \ extern "C" al_create_vertex_buffer( );
 \ extern "C" al_create_vertex_decl( );
-\ extern "C" al_create_voice( );
+extern "C" void * al_create_voice( int rate, int depth, int conf );
 \ extern "C" al_cstr( );
 \ extern "C" al_cstr_dup( );
 \ extern "C" al_destroy_audio_recorder( );
-\ extern "C" al_destroy_audio_stream( );
-\ extern "C" al_destroy_bitmap( );
+extern "C" void al_destroy_audio_stream( void * stream );
+extern "C" void al_destroy_bitmap( void * bitmap );
 \ extern "C" al_destroy_cond( );
 \ extern "C" al_destroy_config( );
 \ extern "C" al_destroy_display( );
@@ -2628,7 +2628,7 @@ extern "C" void * al_create_display( uint w, uint h );
 \ extern "C" al_destroy_mutex( );
 \ extern "C" al_destroy_native_file_dialog( );
 \ extern "C" al_destroy_path( );
-\ extern "C" al_destroy_sample( );
+extern "C" void al_destroy_sample( void * sample );
 \ extern "C" al_destroy_sample_instance( );
 \ extern "C" al_destroy_shader( );
 \ extern "C" al_destroy_thread( );
@@ -2801,9 +2801,9 @@ extern "C" void al_flip_display( void * display );
 \ extern "C" al_get_bitmap_depth( );
 \ extern "C" al_get_bitmap_flags( );
 \ extern "C" al_get_bitmap_format( );
-\ extern "C" al_get_bitmap_height( );
+extern "C" int al_get_bitmap_height( void * bmp );
 \ extern "C" al_get_bitmap_samples( );
-\ extern "C" al_get_bitmap_width( );
+extern "C" int al_get_bitmap_width( void * bmp );
 \ extern "C" al_get_bitmap_x( );
 \ extern "C" al_get_bitmap_y( );
 \ extern "C" al_get_blend_color( );
@@ -2830,13 +2830,13 @@ extern "C" void al_flip_display( void * display );
 \ extern "C" al_get_display_event_source( );
 \ extern "C" al_get_display_flags( );
 \ extern "C" al_get_display_format( );
-extern "C" uint al_get_display_height( void * );
+extern "C" uint al_get_display_height( void * display );
 \ extern "C" al_get_display_menu( );
 \ extern "C" al_get_display_mode( );
 \ extern "C" al_get_display_option( );
 \ extern "C" al_get_display_orientation( );
 \ extern "C" al_get_display_refresh_rate( );
-extern "C" uint al_get_display_width( void * );
+extern "C" uint al_get_display_width( void * display );
 \ extern "C" al_get_errno( );
 \ extern "C" al_get_event_source_data( );
 \ extern "C" al_get_fallback_font( );
@@ -2893,7 +2893,7 @@ extern "C" void al_get_keyboard_state( void * state );
 \ extern "C" al_get_mixer_gain( );
 \ extern "C" al_get_mixer_playing( );
 \ extern "C" al_get_mixer_quality( );
-\ extern "C" al_get_monitor_info( );
+extern "C" bool al_get_monitor_info( int adapter, void * info );
 \ extern "C" al_get_mouse_cursor_position( );
 \ extern "C" al_get_mouse_emulation_mode( );
 \ extern "C" al_get_mouse_event_source( );
@@ -2921,7 +2921,7 @@ extern "C" void al_get_keyboard_state( void * state );
 \ extern "C" al_get_next_event( );
 \ extern "C" al_get_num_display_modes( );
 \ extern "C" al_get_num_joysticks( );
-\ extern "C" al_get_num_video_adapters( );
+extern "C" int al_get_num_video_adapters( );
 \ extern "C" al_get_opengl_extension_list( );
 \ extern "C" al_get_opengl_fbo( );
 \ extern "C" al_get_opengl_proc_address( );
@@ -2971,7 +2971,7 @@ extern "C" void al_get_keyboard_state( void * state );
 \ extern "C" al_get_standard_path( );
 \ extern "C" al_get_system_config( );
 \ extern "C" al_get_system_driver( );
-\ extern "C" al_get_target_bitmap( );
+extern "C" void * al_get_target_bitmap( );
 \ extern "C" al_get_text_dimensions( );
 \ extern "C" al_get_text_width( );
 \ extern "C" al_get_thread_should_stop( );
@@ -3007,7 +3007,7 @@ extern "C" void al_get_keyboard_state( void * state );
 \ extern "C" al_have_d3d_non_square_texture_support( );
 \ extern "C" al_have_opengl_extension( );
 \ extern "C" al_hide_mouse_cursor( );
-\ extern "C" al_hold_bitmap_drawing( );
+extern "C" void al_hold_bitmap_drawing( int hold );
 \ extern "C" al_horizontal_shear_transform( );
 \ extern "C" al_identify_bitmap( );
 \ extern "C" al_identify_bitmap_f( );
@@ -3064,7 +3064,7 @@ extern "C" int al_install_touch_input( );
 \ extern "C" al_join_thread( );
 extern "C" int al_key_down( void * state, int keycode );
 \ extern "C" al_keycode_to_name( );
-\ extern "C" al_load_audio_stream( );
+extern "C" void * al_load_audio_stream( void * filepath, int bufs, int bufsize );
 \ extern "C" al_load_audio_stream_f( );
 extern "C" void * al_load_bitmap( void * filename );
 \ extern "C" al_load_bitmap_f( );
@@ -3075,7 +3075,7 @@ extern "C" void * al_load_bitmap( void * filename );
 \ extern "C" al_load_config_file( );
 \ extern "C" al_load_config_file_f( );
 \ extern "C" al_load_font( );
-\ extern "C" al_load_sample( );
+extern "C" void * al_load_sample( void * filepath );
 \ extern "C" al_load_sample_f( );
 \ extern "C" al_load_ttf_font( );
 \ extern "C" al_load_ttf_font_f( );
@@ -3112,7 +3112,8 @@ extern "C" void * al_load_bitmap( void * filename );
 \ extern "C" al_peek_next_event( );
 \ extern "C" al_perspective_transform( );
 \ extern "C" al_play_haptic_effect( );
-\ extern "C" al_play_sample( );
+extern "C" void al_play_sample( void * sample, float gain, float pan, float speed,
+   int loop, void * ret_id );
 \ extern "C" al_play_sample_instance( );
 \ extern "C" al_popup_menu( );
 \ extern "C" al_premul_rgba( );
@@ -3155,8 +3156,8 @@ extern "C" void * al_load_bitmap( void * filename );
 \ extern "C" al_remove_path_component( );
 \ extern "C" al_reparent_bitmap( );
 \ extern "C" al_replace_path_component( );
-\ extern "C" al_reserve_samples( );
-\ extern "C" al_reset_clipping_rectangle( );
+extern "C" bool al_reserve_samples( int count );
+extern "C" void al_reset_clipping_rectangle( );
 \ extern "C" al_reset_new_display_options( );
 \ extern "C" al_resize_display( );
 \ extern "C" al_rest( );
@@ -3186,17 +3187,17 @@ extern "C" void al_scale_transform( void * m, float sx, float sy );
 \ extern "C" al_set_audio_stream_loop_secs( );
 \ extern "C" al_set_audio_stream_pan( );
 \ extern "C" al_set_audio_stream_playing( );
-\ extern "C" al_set_audio_stream_playmode( );
+extern "C" int al_set_audio_stream_playmode( void * stream, int mode );
 \ extern "C" al_set_audio_stream_speed( );
 \ extern "C" al_set_blend_color( );
 \ extern "C" al_set_blender( );
 \ extern "C" al_set_clipboard_text( );
-\ extern "C" al_set_clipping_rectangle( );
+extern "C" void al_set_clipping_rectangle( int x, int y, int width, int height );
 \ extern "C" al_set_config_value( );
 \ extern "C" al_set_current_opengl_context( );
 \ extern "C" al_set_d3d_device_release_callback( );
 \ extern "C" al_set_d3d_device_restore_callback( );
-\ extern "C" al_set_default_mixer( );
+extern "C" bool al_set_default_mixer( void * mixer );
 \ extern "C" al_set_default_voice( );
 \ extern "C" al_set_display_flag( );
 \ extern "C" al_set_display_icon( );
@@ -3217,7 +3218,7 @@ extern "C" void al_scale_transform( void * m, float sx, float sy );
 \ extern "C" al_set_menu_item_icon( );
 \ extern "C" al_set_mixer_frequency( );
 \ extern "C" al_set_mixer_gain( );
-\ extern "C" al_set_mixer_playing( );
+extern "C" boold al_set_mixer_playing( void * mixer, int state );
 \ extern "C" al_set_mixer_postprocess_callback( );
 \ extern "C" al_set_mixer_quality( );
 \ extern "C" al_set_mouse_axis( );
@@ -3265,7 +3266,7 @@ extern "C" void al_set_new_display_option( int option, int value, int importance
 \ extern "C" al_set_standard_fs_interface( );
 \ extern "C" al_set_system_mouse_cursor( );
 \ extern "C" al_set_target_backbuffer( );
-\ extern "C" al_set_target_bitmap( );
+extern "C" void al_set_target_bitmap( void * bitmap );
 \ extern "C" al_set_thread_should_stop( );
 \ extern "C" al_set_timer_count( );
 \ extern "C" al_set_timer_speed( );
@@ -3273,7 +3274,7 @@ extern "C" void al_set_new_display_option( int option, int value, int importance
 \ extern "C" al_set_voice_playing( );
 \ extern "C" al_set_voice_position( );
 \ extern "C" al_set_window_constraints( );
-\ extern "C" al_set_window_position( );
+extern "C" void al_set_window_position( void * display, int x, int y );
 \ extern "C" al_set_window_title( );
 \ extern "C" al_show_mouse_cursor( );
 \ extern "C" al_show_native_file_dialog( );
@@ -3661,3 +3662,28 @@ extern "C" void al_use_transform( void * m );
 \ extern "C" xm_convert_vibrato( );
 
 256 constant /ALLEGRO_KEYBOARD_STATE
+1 9 lshift constant ALLEGRO_FULLSCREEN_WINDOW
+26 constant ALLEGRO_VSYNC
+$00 constant ALLEGRO_AUDIO_DEPTH_INT8      
+$01 constant ALLEGRO_AUDIO_DEPTH_INT16     
+$02 constant ALLEGRO_AUDIO_DEPTH_INT24     
+$03 constant ALLEGRO_AUDIO_DEPTH_FLOAT32   
+$08 constant ALLEGRO_AUDIO_DEPTH_UNSIGNED  
+ALLEGRO_AUDIO_DEPTH_INT8  ALLEGRO_AUDIO_DEPTH_UNSIGNED or constant ALLEGRO_AUDIO_DEPTH_UINT8
+ALLEGRO_AUDIO_DEPTH_INT16 ALLEGRO_AUDIO_DEPTH_UNSIGNED or constant ALLEGRO_AUDIO_DEPTH_UINT16
+ALLEGRO_AUDIO_DEPTH_INT24 ALLEGRO_AUDIO_DEPTH_UNSIGNED or constant ALLEGRO_AUDIO_DEPTH_UINT24 
+
+$100 constant ALLEGRO_PLAYMODE_ONCE    
+$101 constant ALLEGRO_PLAYMODE_LOOP    
+$102 constant ALLEGRO_PLAYMODE_BIDIR
+
+$10 constant ALLEGRO_CHANNEL_CONF_1  
+$20 constant ALLEGRO_CHANNEL_CONF_2  
+$30 constant ALLEGRO_CHANNEL_CONF_3  
+$40 constant ALLEGRO_CHANNEL_CONF_4  
+$51 constant ALLEGRO_CHANNEL_CONF_5_1
+$61 constant ALLEGRO_CHANNEL_CONF_6_1
+$71 constant ALLEGRO_CHANNEL_CONF_7_1
+
+-1 constant ALLEGRO_DEFAULT_DISPLAY_ADAPTER
+4 cells constant /ALLEGRO_MONITOR_INFO

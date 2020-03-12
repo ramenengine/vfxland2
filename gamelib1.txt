@@ -1,0 +1,1 @@
+If OGG files won't load or stream, copy all the DLL's to VFX's Bin folder.
