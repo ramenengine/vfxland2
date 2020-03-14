@@ -2588,7 +2588,7 @@ extern "C" void al_clear_to_color( float r, float g, float b, float a );
 \ extern "C" al_create_cond( );
 \ extern "C" al_create_config( );
 extern "C" void * al_create_display( uint w, uint h );
-\ extern "C" al_create_event_queue( );
+extern "C" void * al_create_event_queue( );
 \ extern "C" al_create_file_handle( );
 \ extern "C" al_create_fs_entry( );
 \ extern "C" al_create_index_buffer( );
@@ -2827,7 +2827,7 @@ extern "C" int al_get_bitmap_width( void * bmp );
 \ extern "C" al_get_default_mixer( );
 \ extern "C" al_get_default_shader_source( );
 \ extern "C" al_get_default_voice( );
-\ extern "C" al_get_display_event_source( );
+extern "C" void * al_get_display_event_source( void * display );
 \ extern "C" al_get_display_flags( );
 \ extern "C" al_get_display_format( );
 extern "C" uint al_get_display_height( void * display );
@@ -2872,7 +2872,7 @@ extern "C" uint al_get_display_width( void * display );
 \ extern "C" al_get_joystick_active( );
 \ extern "C" al_get_joystick_axis_name( );
 \ extern "C" al_get_joystick_button_name( );
-\ extern "C" al_get_joystick_event_source( );
+extern "C" void * al_get_joystick_event_source( );
 \ extern "C" al_get_joystick_name( );
 \ extern "C" al_get_joystick_num_axes( );
 \ extern "C" al_get_joystick_num_buttons( );
@@ -2880,7 +2880,7 @@ extern "C" uint al_get_display_width( void * display );
 \ extern "C" al_get_joystick_state( );
 \ extern "C" al_get_joystick_stick_flags( );
 \ extern "C" al_get_joystick_stick_name( );
-\ extern "C" al_get_keyboard_event_source( );
+extern "C" void * al_get_keyboard_event_source( );
 extern "C" void al_get_keyboard_state( void * state );
 \ extern "C" al_get_max_haptic_effects( );
 \ extern "C" al_get_menu_item_caption( );
@@ -2896,11 +2896,11 @@ extern "C" void al_get_keyboard_state( void * state );
 extern "C" bool al_get_monitor_info( int adapter, void * info );
 \ extern "C" al_get_mouse_cursor_position( );
 \ extern "C" al_get_mouse_emulation_mode( );
-\ extern "C" al_get_mouse_event_source( );
+extern "C" void * al_get_mouse_event_source( );
 \ extern "C" al_get_mouse_num_axes( );
 \ extern "C" al_get_mouse_num_buttons( );
-\ extern "C" al_get_mouse_state( );
-\ extern "C" al_get_mouse_state_axis( );
+extern "C" void al_get_mouse_state( void * state );
+extern "C" int al_get_mouse_state_axis( void * state, int axis );
 \ extern "C" al_get_mouse_wheel_precision( );
 \ extern "C" al_get_native_file_dialog_count( );
 \ extern "C" al_get_native_file_dialog_path( );
@@ -2918,7 +2918,7 @@ extern "C" bool al_get_monitor_info( int adapter, void * info );
 \ extern "C" al_get_new_window_title( );
 \ extern "C" al_get_next_config_entry( );
 \ extern "C" al_get_next_config_section( );
-\ extern "C" al_get_next_event( );
+extern "C" bool al_get_next_event( void * queue, void * event );
 \ extern "C" al_get_num_display_modes( );
 \ extern "C" al_get_num_joysticks( );
 extern "C" int al_get_num_video_adapters( );
@@ -2977,7 +2977,7 @@ extern "C" void * al_get_target_bitmap( );
 \ extern "C" al_get_thread_should_stop( );
 \ extern "C" al_get_time( );
 \ extern "C" al_get_timer_count( );
-\ extern "C" al_get_timer_event_source( );
+extern "C" void * al_get_timer_event_source( );
 \ extern "C" al_get_timer_speed( );
 \ extern "C" al_get_timer_started( );
 \ extern "C" al_get_touch_input_event_source( );
@@ -3099,7 +3099,7 @@ extern "C" void * al_load_sample( void * filepath );
 \ extern "C" al_map_rgba_f( );
 \ extern "C" al_merge_config( );
 \ extern "C" al_merge_config_into( );
-\ extern "C" al_mouse_button_down( );
+extern "C" bool al_mouse_button_down( void * state, int button );
 \ extern "C" al_open_directory( );
 \ extern "C" al_open_fs_entry( );
 \ extern "C" al_open_memfile( );
@@ -3136,7 +3136,7 @@ extern "C" void al_play_sample( void * sample, float gain, float pan, float spee
 \ extern "C" al_register_bitmap_loader_f( );
 \ extern "C" al_register_bitmap_saver( );
 \ extern "C" al_register_bitmap_saver_f( );
-\ extern "C" al_register_event_source( );
+extern "C" void al_register_event_source( void * queue , void * source );
 \ extern "C" al_register_font_loader( );
 \ extern "C" al_register_sample_loader( );
 \ extern "C" al_register_sample_loader_f( );
@@ -3687,3 +3687,96 @@ $71 constant ALLEGRO_CHANNEL_CONF_7_1
 
 -1 constant ALLEGRO_DEFAULT_DISPLAY_ADAPTER
 4 cells constant /ALLEGRO_MONITOR_INFO
+
+1  constant  ALLEGRO_EVENT_JOYSTICK_AXIS
+2  constant  ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN
+3  constant  ALLEGRO_EVENT_JOYSTICK_BUTTON_UP
+4  constant  ALLEGRO_EVENT_JOYSTICK_CONFIGURATION
+10 constant  ALLEGRO_EVENT_KEY_DOWN
+11 constant  ALLEGRO_EVENT_KEY_CHAR
+12 constant  ALLEGRO_EVENT_KEY_UP
+20 constant  ALLEGRO_EVENT_MOUSE_AXES
+21 constant  ALLEGRO_EVENT_MOUSE_BUTTON_DOWN
+22 constant  ALLEGRO_EVENT_MOUSE_BUTTON_UP
+23 constant  ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY
+24 constant  ALLEGRO_EVENT_MOUSE_LEAVE_DISPLAY
+25 constant  ALLEGRO_EVENT_MOUSE_WARPED
+30 constant  ALLEGRO_EVENT_TIMER
+40 constant  ALLEGRO_EVENT_DISPLAY_EXPOSE
+41 constant  ALLEGRO_EVENT_DISPLAY_RESIZE
+42 constant  ALLEGRO_EVENT_DISPLAY_CLOSE
+43 constant  ALLEGRO_EVENT_DISPLAY_LOST
+44 constant  ALLEGRO_EVENT_DISPLAY_FOUND
+45 constant  ALLEGRO_EVENT_DISPLAY_SWITCH_IN
+46 constant  ALLEGRO_EVENT_DISPLAY_SWITCH_OUT
+47 constant  ALLEGRO_EVENT_DISPLAY_ORIENTATION
+48 constant  ALLEGRO_EVENT_DISPLAY_HALT_DRAWING
+49 constant  ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING
+50 constant  ALLEGRO_EVENT_TOUCH_BEGIN
+51 constant  ALLEGRO_EVENT_TOUCH_END
+52 constant  ALLEGRO_EVENT_TOUCH_MOVE
+53 constant  ALLEGRO_EVENT_TOUCH_CANCEL
+60 constant  ALLEGRO_EVENT_DISPLAY_CONNECTED
+61 constant  ALLEGRO_EVENT_DISPLAY_DISCONNECTED
+
+
+struct /ALLEGRO_EVENT
+    field: ALLEGRO_EVENT.type
+    field: ALLEGRO_EVENT.source
+    2 cells +field ALLEGRO_EVENT.timestamp
+    union
+    part 
+        field: DISPLAY_EVENT.x
+        field: DISPLAY_EVENT.y
+        field: DISPLAY_EVENT.width
+        field: DISPLAY_EVENT.height
+        field: DISPLAY_EVENT.orientation
+    part
+        field: JOYSTICK_EVENT.*id
+        field: JOYSTICK_EVENT.stick
+        field: JOYSTICK_EVENT.axis
+        field: JOYSTICK_EVENT.pos (  float )
+        field: JOYSTICK_EVENT.button
+    part
+        field: KEYBOARD_EVENT.display
+        field: KEYBOARD_EVENT.keycode                 \ /* the physical key pressed*/
+        field: KEYBOARD_EVENT.unichar                 \ /* unicode character or negative*/
+        field: KEYBOARD_EVENT.modifiers               \ /* bit-field*/
+        field: KEYBOARD_EVENT.repeat                  \ /* auto-repeated or not*/
+    part    
+        field: MOUSE_EVENT.display
+        \ /* ( display) Window the event originate from
+        \ * ( x, y) Primary mouse position
+        \ * ( z) Mouse wheel position ( 1D 'wheel'), or,
+        \ * ( w, z) Mouse wheel position ( 2D 'ball')
+        \ * ( pressure) The pressure applied, for stylus ( 0 or 1 for normal mouse)
+        \ */
+        field: MOUSE_EVENT.x
+        field: MOUSE_EVENT.y
+        field: MOUSE_EVENT.z
+        field: MOUSE_EVENT.w
+        field: MOUSE_EVENT.dx
+        field: MOUSE_EVENT.dy
+        field: MOUSE_EVENT.dz
+        field: MOUSE_EVENT.dw
+        field: MOUSE_EVENT.button
+        field: MOUSE_EVENT.pressure (  float )
+    part
+        2 cells +field TIMER_EVENT.count
+        2 cells +field TIMER_EVENT.error  \ double-float
+    end-union
+end-struct
+
+struct /ALLEGRO_MOUSE_STATE
+    field: ALLEGRO_MOUSE_STATE.x
+    field: ALLEGRO_MOUSE_STATE.y
+    field: ALLEGRO_MOUSE_STATE.z
+    field: ALLEGRO_MOUSE_STATE.w
+    field: ALLEGRO_MOUSE_STATE.more_axis1
+    field: ALLEGRO_MOUSE_STATE.more_axis2
+    field: ALLEGRO_MOUSE_STATE.more_axis3
+    field: ALLEGRO_MOUSE_STATE.more_axis4
+    field: ALLEGRO_MOUSE_STATE.buttons
+    field: ALLEGRO_MOUSE_STATE.pressure  \ float
+    field: ALLEGRO_MOUSE_STATE.display
+end-struct

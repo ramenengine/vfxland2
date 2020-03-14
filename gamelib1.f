@@ -1,5 +1,5 @@
 finit
-[defined] cleanup-allegro [if] cleanup-allegro [then]
+[defined] shutdown [if] shutdown [then]
 empty 
 
 include allegro-5.2.3.f
@@ -11,15 +11,20 @@ include allegro-5.2.3.f
 0 value displayh
 0 value display
 0 value monitorw
-create kbs0 /ALLEGRO_KEYBOARD_STATE allot
+create kbs0 /ALLEGRO_KEYBOARD_STATE allot&erase
+create ms0 /ALLEGRO_MOUSE_STATE allot&erase
+create ms1 /ALLEGRO_MOUSE_STATE allot&erase
 0 value mixer
 0 value voice
-create mi /ALLEGRO_MONITOR_INFO allot
+create mi /ALLEGRO_MONITOR_INFO allot&erase
+0 value queue
+create alevt 256 allot&erase
 
 defer load-data ' noop is load-data
 defer init-game ' noop is init-game
 defer update  ' noop is update
 defer deinit  ' noop is deinit
+defer pump    ' noop is pump
 
 : -audio
     mixer 0= if exit then
@@ -58,33 +63,48 @@ defer deinit  ' noop is deinit
     display al_get_display_height to displayh
     \ 0 mi al_get_monitor_info drop
     \ mi cell+ cell+ @ to monitorw
-    1920 to monitorw
-    display monitorw displayw - 0 al_set_window_position 
+    \ 1920 to monitorw
+    \ display monitorw displayw - 0 al_set_window_position
+    display 0 0 al_set_window_position
     0 to mixer  0 to voice
     64 al_reserve_samples 0= abort" Allegro: Error reserving samples." 
     +audio
+    al_create_event_queue to queue
+    queue  display       al_get_display_event_source  al_register_event_source
+    queue                al_get_mouse_event_source    al_register_event_source
+    queue                al_get_keyboard_event_source al_register_event_source
 ;
 : go
     begin
         update
         kbs0 al_get_keyboard_state
+        ms0 ms1 /ALLEGRO_MOUSE_STATE move
+        ms0 al_get_mouse_state
+        begin queue alevt al_get_next_event while pump repeat
+        pause
     kbs0 59 al_key_down until
 ;
-: warm
+: init
     init-allegro
     load-data
     init-game
+;
+: warm
+    init
     go
+;
+: shutdown
+    deinit
+    al_uninstall_system
 ;
 : cold
     warm
-    deinit
-    al_uninstall_system
+    shutdown
 ;
-: cleanup-allegro
-    deinit
-    al_uninstall_system
-;
+
+: etype  ( - ALLEGRO_EVENT_TYPE )  alevt ALLEGRO_EVENT.type @ ;
+: keycode  alevt KEYBOARD_EVENT.keycode @ ;
+: unichar  alevt KEYBOARD_EVENT.unichar @ ;
 
 
 \ --------------------------------------------------------------
@@ -227,6 +247,19 @@ defer step        ' noop is step
 : matrix  create 16 cells allot ;
 matrix m
 
+: draw-as-sprite
+    0 bmp ?dup if sx s>f sy s>f sw sh x floor y floor flip al_draw_bitmap_region then
+;
+
+:make fg
+    1 al_hold_bitmap_drawing
+    max-objects 0 do
+        i object to me
+        en if draw-as-sprite then
+    loop
+    0 al_hold_bitmap_drawing
+;
+
 :make update
     m al_identity_transform
     m zoom zoom al_scale_transform
@@ -234,14 +267,6 @@ matrix m
     bgr bgg bgb 1e al_clear_to_color
     me >r
         bg
-        1 al_hold_bitmap_drawing
-        max-objects 0 do
-            i object to me
-            en if
-                0 bmp sx s>f sy s>f sw sh x floor y floor flip al_draw_bitmap_region
-            then
-        loop
-        0 al_hold_bitmap_drawing
         fg
         hud
         display al_flip_display
@@ -249,7 +274,12 @@ matrix m
     r> to me
 ;
 
-\ --------------------------------------------------------------
+( -------------------------------------------------------------- )
+
+
+
+
+( -------------------------------------------------------------- )
 
 /OBJECT
     fgetset tm.w tm.w!
@@ -304,17 +334,14 @@ constant /TILEMAP
         
         ( adr )
         tm-vrows 0 do
-            dup
-            tm-vcols 0 do
-                dup @ -1 <>  if
-                    b over @ tcols mod s>f tm.tw f*
-                      over @ tcols / s>f tm.th f*
+            dup tm-vcols cells bounds do
+                i @ -1 <> if
+                    b i @ tcols /mod swap s>f tm.th f* s>f tm.tw f*
                         tm.tw tm.th xy flip al_draw_bitmap_region
                 then
-                cell+ 
                 x tm.tw f+ x!
-            loop
-            drop tm.stride +
+            cell +loop
+            tm.stride +
             rx x!
             y tm.th f+ y!
         loop

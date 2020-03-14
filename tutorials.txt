@@ -1,0 +1,16 @@
+allegro bindings (adding functions and constants)
+
+floats
+stacks and arrays
+getsets
+empty
+
+creating the window
+drawing stuff
+adding the main loop
+getting input
+adding multiple sprites
+using matrix transformations
+
+events / structs / allegro bindings (adding structs)
+

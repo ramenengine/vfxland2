@@ -1,5 +1,7 @@
 include gamelib1
+\ include counter \ <-- Windows only
 
+: sfx  sample @ $100 play ;
 
 create testmap
 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ,
