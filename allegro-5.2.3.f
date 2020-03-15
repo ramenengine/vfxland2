@@ -2584,7 +2584,7 @@ extern "C" void al_clear_to_color( float r, float g, float b, float a );
 \ extern "C" al_create_audio_recorder( );
 \ extern "C" al_create_audio_stream( );
 \ extern "C" al_create_bitmap( );
-\ extern "C" al_create_builtin_font( );
+extern "C" void * al_create_builtin_font( );
 \ extern "C" al_create_cond( );
 \ extern "C" al_create_config( );
 extern "C" void * al_create_display( uint w, uint h );
@@ -2619,7 +2619,7 @@ extern "C" void al_destroy_bitmap( void * bitmap );
 \ extern "C" al_destroy_config( );
 \ extern "C" al_destroy_display( );
 \ extern "C" al_destroy_event_queue( );
-\ extern "C" al_destroy_font( );
+extern "C" void al_destroy_font( void * font );
 \ extern "C" al_destroy_fs_entry( );
 \ extern "C" al_destroy_index_buffer( );
 \ extern "C" al_destroy_menu( );
@@ -2642,7 +2642,13 @@ extern "C" void al_destroy_sample( void * sample );
 \ extern "C" al_detach_sample_instance( );
 \ extern "C" al_detach_voice( );
 \ extern "C" al_disable_menu_event_source( );
-\ extern "C" al_do_multiline_text( );
+
+\ bool (*cb)(int line_num, const char *line, int size, void *extra)
+extern "C" void al_do_multiline_text( void *font,
+   float max_width, void *text,
+   void *cb, 
+   void *extra );
+   
 \ extern "C" al_do_multiline_ustr( );
 \ extern "C" al_drain_audio_stream( );
 \ extern "C" al_draw_arc( );
@@ -2669,7 +2675,9 @@ extern "C" void al_draw_bitmap_region(
 \ extern "C" al_draw_justified_textf( );
 \ extern "C" al_draw_justified_ustr( );
 \ extern "C" al_draw_line( );
-\ extern "C" al_draw_multiline_text( );
+extern "C" void al_draw_multiline_text( void *font,
+     float r, float g, float b, float a, float x, float y, float max_width, float line_height,
+     int flags, void *text );
 \ extern "C" al_draw_multiline_textf( );
 \ extern "C" al_draw_multiline_ustr( );
 \ extern "C" al_draw_pieslice( );
@@ -2686,7 +2694,7 @@ extern "C" void al_draw_bitmap_region(
 \ extern "C" al_draw_soft_line( );
 \ extern "C" al_draw_soft_triangle( );
 \ extern "C" al_draw_spline( );
-\ extern "C" al_draw_text( );
+extern "C" void al_draw_text( void *font, float r, float g, float b, float a, float x, float y, int flags, void *text );
 \ extern "C" al_draw_textf( );
 \ extern "C" al_draw_tinted_bitmap( );
 \ extern "C" al_draw_tinted_bitmap_region( );
@@ -2845,7 +2853,7 @@ extern "C" uint al_get_display_width( void * display );
 \ extern "C" al_get_first_config_section( );
 \ extern "C" al_get_font_ascent( );
 \ extern "C" al_get_font_descent( );
-\ extern "C" al_get_font_line_height( );
+extern "C" int al_get_font_line_height( void * font );
 \ extern "C" al_get_font_ranges( );
 \ extern "C" al_get_fs_entry_atime( );
 \ extern "C" al_get_fs_entry_ctime( );
@@ -2973,7 +2981,7 @@ extern "C" int al_get_num_video_adapters( );
 \ extern "C" al_get_system_driver( );
 extern "C" void * al_get_target_bitmap( );
 \ extern "C" al_get_text_dimensions( );
-\ extern "C" al_get_text_width( );
+extern "C" int al_get_text_width( void * font, void * str );
 \ extern "C" al_get_thread_should_stop( );
 \ extern "C" al_get_time( );
 \ extern "C" al_get_timer_count( );
@@ -3074,7 +3082,7 @@ extern "C" void * al_load_bitmap( void * filename );
 \ extern "C" al_load_bitmap_font_flags( );
 \ extern "C" al_load_config_file( );
 \ extern "C" al_load_config_file_f( );
-\ extern "C" al_load_font( );
+extern "C" void * al_load_font( void * filepath, int size, int flags );
 extern "C" void * al_load_sample( void * filepath );
 \ extern "C" al_load_sample_f( );
 \ extern "C" al_load_ttf_font( );
@@ -3780,3 +3788,8 @@ struct /ALLEGRO_MOUSE_STATE
     field: ALLEGRO_MOUSE_STATE.pressure  \ float
     field: ALLEGRO_MOUSE_STATE.display
 end-struct
+
+0 constant ALLEGRO_ALIGN_LEFT
+1 constant ALLEGRO_ALIGN_CENTER
+2 constant ALLEGRO_ALIGN_RIGHT
+4 constant ALLEGRO_ALIGN_INTEGER

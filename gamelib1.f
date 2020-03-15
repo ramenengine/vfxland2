@@ -20,6 +20,7 @@ create ms1 /ALLEGRO_MOUSE_STATE allot&erase
 create mi /ALLEGRO_MONITOR_INFO allot&erase
 0 value queue
 create alevt 256 allot&erase
+0 value bif  \ builtin font
 
 defer load-data ' noop is load-data
 defer init-game ' noop is init-game
@@ -74,6 +75,7 @@ defer pump    ' noop is pump
     queue  display       al_get_display_event_source  al_register_event_source
     queue                al_get_mouse_event_source    al_register_event_source
     queue                al_get_keyboard_event_source al_register_event_source
+    al_create_builtin_font to bif
 ;
 : go
     begin
