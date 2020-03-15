@@ -183,17 +183,19 @@ max-objects 256 array object
 : bmp  bitmap @ ;
 : bmp! bitmap ! ;
 
+: echo  cr dup zcount type ;
+
 : ?LOADBMP  ( var zstr )
-    over @ ?dup if al_destroy_bitmap then
     dup zcount FileExist? if
-        al_load_bitmap swap !
+        over @ ?dup if al_destroy_bitmap then
+        echo al_load_bitmap swap !
     else drop drop then
 ;
 
 : ?LOADSMP  ( var zstr )
-    over @ ?dup if al_destroy_sample then
     dup zcount FileExist? if
-        al_load_sample swap !
+        over @ ?dup if al_destroy_sample then
+        echo al_load_sample swap !
     else drop drop then
 ;
 
