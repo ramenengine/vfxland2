@@ -12,6 +12,7 @@ include allegro-5.2.3.f
 0 value display
 0 value monitorw
 create kbs0 /ALLEGRO_KEYBOARD_STATE allot&erase
+create kbs1 /ALLEGRO_KEYBOARD_STATE allot&erase
 create ms0 /ALLEGRO_MOUSE_STATE allot&erase
 create ms1 /ALLEGRO_MOUSE_STATE allot&erase
 0 value mixer
@@ -77,6 +78,7 @@ defer pump    ' noop is pump
 : go
     begin
         update
+        kbs0 kbs1 /ALLEGRO_KEYBOARD_STATE move
         kbs0 al_get_keyboard_state
         ms0 ms1 /ALLEGRO_MOUSE_STATE move
         ms0 al_get_mouse_state
@@ -105,7 +107,6 @@ defer pump    ' noop is pump
 : etype  ( - ALLEGRO_EVENT_TYPE )  alevt ALLEGRO_EVENT.type @ ;
 : keycode  alevt KEYBOARD_EVENT.keycode @ ;
 : unichar  alevt KEYBOARD_EVENT.unichar @ ;
-
 
 \ --------------------------------------------------------------
 
