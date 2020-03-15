@@ -1,1 +1,0 @@
-: :make  :noname  postpone [  [compile] is  ] ;
