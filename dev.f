@@ -1,3 +1,5 @@
+include counter
+
 lenof bitmap 256 array zbmp-file
 lenof bitmap cell array bmp-mtime
 

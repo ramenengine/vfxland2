@@ -81,6 +81,7 @@ constant /screen
     al_install_touch_input check
     ALLEGRO_VSYNC 1 0 al_set_new_display_option
 \    ALLEGRO_FULLSCREEN_WINDOW al_set_new_display_flags
+\    ALLEGRO_FULLSCREEN al_set_new_display_flags
 \    0 0 al_create_display to display
     640 480 al_create_display to display
     display al_get_display_width to displayw
@@ -390,3 +391,16 @@ constant /TILEMAP
 ;
 
 : packtile  ( x y flip - )  24 lshift swap 8 lshift or or ;
+
+0e fvalue dx
+0e fvalue dy
+
+: draw-tile ( tile plane f: x y - )
+    to dy to dx
+    {{ | t |
+        tm.bmp bmp ?dup if 
+            t $ff and s>f tm.tw f*
+            t $ff00 and 8 rshift s>f tm.th f*
+            tm.tw tm.th dx dy t 24 rshift al_draw_bitmap_region
+        then
+    }} ;

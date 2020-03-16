@@ -2652,7 +2652,7 @@ extern "C" void al_do_multiline_text( void *font,
 \ extern "C" al_do_multiline_ustr( );
 \ extern "C" al_drain_audio_stream( );
 \ extern "C" al_draw_arc( );
-\ extern "C" al_draw_bitmap( );
+extern "C" void al_draw_bitmap( void * bitmap, float x, float y, int flags );
 extern "C" void al_draw_bitmap_region(
     void * bitmap,
     float sx, float sy, float sw, float sh, float dx, float dy, int flags
@@ -2665,7 +2665,8 @@ extern "C" void al_draw_bitmap_region(
 \ extern "C" al_draw_filled_pieslice( );
 \ extern "C" al_draw_filled_polygon( );
 \ extern "C" al_draw_filled_polygon_with_holes( );
-\ extern "C" al_draw_filled_rectangle( );
+extern "C" void al_draw_filled_rectangle( float x1, float y1, float x2, float y2,
+   float r, float g, float b, float a );
 \ extern "C" al_draw_filled_rounded_rectangle( );
 \ extern "C" al_draw_filled_triangle( );
 \ extern "C" al_draw_glyph( );
@@ -2836,14 +2837,14 @@ extern "C" int al_get_bitmap_width( void * bmp );
 \ extern "C" al_get_default_shader_source( );
 \ extern "C" al_get_default_voice( );
 extern "C" void * al_get_display_event_source( void * display );
-\ extern "C" al_get_display_flags( );
+extern "C" int al_get_display_flags( void * display );
 \ extern "C" al_get_display_format( );
 extern "C" uint al_get_display_height( void * display );
 \ extern "C" al_get_display_menu( );
 \ extern "C" al_get_display_mode( );
-\ extern "C" al_get_display_option( );
+extern "C" int al_get_display_option( void * display, int option );
 \ extern "C" al_get_display_orientation( );
-\ extern "C" al_get_display_refresh_rate( );
+extern "C" int al_get_display_refresh_rate( void * display );
 extern "C" uint al_get_display_width( void * display );
 \ extern "C" al_get_errno( );
 \ extern "C" al_get_event_source_data( );
@@ -3670,8 +3671,12 @@ extern "C" void al_use_transform( void * m );
 \ extern "C" xm_convert_vibrato( );
 
 256 constant /ALLEGRO_KEYBOARD_STATE
+
+1 1 lshift constant ALLEGRO_FULLSCREEN
 1 9 lshift constant ALLEGRO_FULLSCREEN_WINDOW
 26 constant ALLEGRO_VSYNC
+
+
 $00 constant ALLEGRO_AUDIO_DEPTH_INT8      
 $01 constant ALLEGRO_AUDIO_DEPTH_INT16     
 $02 constant ALLEGRO_AUDIO_DEPTH_INT24     
