@@ -1,67 +1,42 @@
-require keys
+include gamelib1
+require keys.f
+require input.f
+include dev
+
+Module editor
 
 0 value a
 : a!  to a ;
 : !+  a !  cell +to a ;
 
-: kdown  kbs0 swap al_key_down ;
-: kup    kdown not ;
-: kdelta dup kdown kbs1 rot al_key_down - ;
-: kpress   kdelta 1 = ;
-: krel     kdelta -1 = ;
-: shift? 215 kdown 216 kdown or ;
-: ctrl? 217 kdown 218 kdown or ;
-: alt?  219 kdown 220 kdown or ;
-: mouse  ms0 0 al_get_mouse_state_axis ms0 1 al_get_mouse_state_axis ;
-: mickey ms1 0 al_get_mouse_state_axis ms1 1 al_get_mouse_state_axis ;
-: 2-  rot swap - >r - r> ;
-: walt   mouse mickey 2- ;
-
-
 ( maybe pass in the dimensions and source address on the stack ... )
 
 256 256 plane edplane
-8e tm.tw! 8e tm.th!
+16e tm.tw! 16e tm.th!
 1 tm.bmp!
 tm.base constant data
 0 value tile
-0 value ts-mtime  \ last time tileset's bitmap was modified
-lenof bitmap 256 array zbmp-file
-lenof bitmap cell array bmp-mtime
+
+screen map
 
 : randomize
     data a!
-    256 256 * 0 do 72 rnd !+ loop
+    256 256 * 0 do 8 rnd 8 rnd 4 rnd packtile !+ loop
 ;
 randomize
 
-: mtime@
-    al_create_fs_entry >r
-    r@ al_get_fs_entry_mtime 
-    r> al_destroy_fs_entry 
-;
-
-: load-bitmap  ( i zstr - )
-    2dup
-    2dup load-bitmap
-    zcount rot zbmp-file swap 1 + move
-    ( i zstr ) mtime@ swap bmp-mtime !
-;
-
-:make load-data
-    1 z" data/gomolabg.png" load-bitmap
-;
-
-:make bg
+:hook map update
+    2x
+    0.5e 0.5e 0.5e 1e al_clear_to_color
     edplane {{ draw-as-tilemap }} 
 ;
 
-:make pump
+:hook map pump
     etype ALLEGRO_EVENT_MOUSE_BUTTON_DOWN = if
-        cr
-        alevt MOUSE_EVENT.x ?
-        alevt MOUSE_EVENT.y ?
-        alevt MOUSE_EVENT.button ?
+\        cr
+\        alevt MOUSE_EVENT.x ?
+\        alevt MOUSE_EVENT.y ?
+\        alevt MOUSE_EVENT.button ?
     then
 ;
 
@@ -74,7 +49,7 @@ randomize
     1 zbmp-file mtime@ 1 bmp-mtime @ > if 50 ms load-data then
 ;
 
-:make step
+:hook map step
     ?refresh
     ms0 1 al_mouse_button_down if
         <SPACE> kdown  if
@@ -91,5 +66,20 @@ randomize
     ms0 3 al_mouse_button_down if then
 ;
 
+:make system
+    <f1> press if map then
+    <f5> press if game then
+;
 
+EXPORT edplane
+EXPORT map
+
+End-Module
+
+include main
+map
+
+cr
+cr .( F1     F2     F3     F4     F5     F6     F7     F8 )
+cr .( MAP    TILES  OBJS          GAME                    )
 warm

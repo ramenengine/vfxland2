@@ -24,9 +24,29 @@ create alevt 256 allot&erase
 
 defer load-data ' noop is load-data
 defer init-game ' noop is init-game
-defer update  ' noop is update
-defer deinit  ' noop is deinit
-defer pump    ' noop is pump
+defer deinit    ' noop is deinit
+defer system    ' noop is system
+
+
+0 value scr
+
+: execute  ?dup if execute then ;
+: screen-hook  create dup , cell+ does> @ scr + @ execute ;
+
+0
+screen-hook update    
+screen-hook pump      
+screen-hook step      
+constant /screen
+
+: screen  create /screen allot&erase
+    does>
+        \ cr dup >name count type
+        to scr
+;
+
+: :hook   ( - <screen> <hook> code; )
+    :noname ' >body ' >body @ + ! ;
 
 : -audio
     mixer 0= if exit then
@@ -42,21 +62,23 @@ defer pump    ' noop is pump
     mixer #1 al_set_mixer_playing drop
 ;
 
+: check  0= abort" Allegro init error" ;
+
 : init-allegro
-    $5020300 0 al_install_system .
+    $5020300 0 al_install_system check
     
-    al_init_image_addon .
-    al_init_native_dialog_addon .
-    al_init_primitives_addon .
+    al_init_image_addon check
+    al_init_native_dialog_addon check
+    al_init_primitives_addon check
     al_init_font_addon
-    al_init_ttf_addon .
-    al_init_acodec_addon .
+    al_init_ttf_addon check
+    al_init_acodec_addon check
     al_install_audio 0= abort" Error installing audio."
-    al_install_haptic .
-    al_install_joystick .
-    al_install_keyboard .
-    al_install_mouse .
-    al_install_touch_input .
+    al_install_haptic check
+    al_install_joystick check
+    al_install_keyboard check
+    al_install_mouse check
+    al_install_touch_input check
     ALLEGRO_VSYNC 1 0 al_set_new_display_option
 \    ALLEGRO_FULLSCREEN_WINDOW al_set_new_display_flags
 \    0 0 al_create_display to display
@@ -80,12 +102,15 @@ defer pump    ' noop is pump
 : go
     begin
         update
+        display al_flip_display
+        pause
         kbs0 kbs1 /ALLEGRO_KEYBOARD_STATE move
         kbs0 al_get_keyboard_state
         ms0 ms1 /ALLEGRO_MOUSE_STATE move
         ms0 al_get_mouse_state
+        system
         begin queue alevt al_get_next_event while pump repeat
-        pause
+        step
     kbs0 59 al_key_down until
 ;
 : init
@@ -156,6 +181,7 @@ synonym & addr immediate
 \ --------------------------------------------------------------
 
 [undefined] max-objects [if] 256 constant max-objects [then]
+[undefined] /object-slot [if] 256 constant /object-slot [then] 
 
 0
 fgetset x x!  \ x pos
@@ -174,7 +200,7 @@ constant /OBJECT
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
 : init-object  0e 0e xy!  1 en! ;
 
-max-objects 256 array object
+max-objects /object-slot array object
 0 object {{
 
 : btn  kbs0 swap al_key_down ;
@@ -183,19 +209,17 @@ max-objects 256 array object
 : bmp  bitmap @ ;
 : bmp! bitmap ! ;
 
-: echo  cr dup zcount type ;
-
 : ?LOADBMP  ( var zstr )
     dup zcount FileExist? if
         over @ ?dup if al_destroy_bitmap then
-        echo al_load_bitmap swap !
+        al_load_bitmap swap !
     else drop drop then
 ;
 
 : ?LOADSMP  ( var zstr )
     dup zcount FileExist? if
         over @ ?dup if al_destroy_sample then
-        echo al_load_sample swap !
+        al_load_sample swap !
     else drop drop then
 ;
 
@@ -239,7 +263,6 @@ max-objects 256 array object
 defer bg          ' noop is bg
 defer fg          ' noop is fg
 defer hud         ' noop is hud
-defer step        ' noop is step
 
 0e fvalue fgr  0e fvalue fgg  0e fvalue fgb  1e fvalue fga
 0e fvalue bgr  0e fvalue bgg  1e fvalue bgb 
@@ -256,7 +279,9 @@ matrix m
     0 bmp ?dup if sx s>f sy s>f sw sh x floor y floor flip al_draw_bitmap_region then
 ;
 
-:make fg
+screen game game
+
+:hook game fg
     1 al_hold_bitmap_drawing
     max-objects 0 do
         i object to me
@@ -265,17 +290,19 @@ matrix m
     0 al_hold_bitmap_drawing
 ;
 
-:make update
+: 2x
     m al_identity_transform
     m zoom zoom al_scale_transform
     m al_use_transform
+;
+
+: cls 
     bgr bgg bgb 1e al_clear_to_color
+;
+
+:hook game update
     me >r
-        bg
-        fg
-        hud
-        display al_flip_display
-        step
+        2x cls bg fg hud
     r> to me
 ;
 
@@ -285,6 +312,10 @@ matrix m
 
 
 ( -------------------------------------------------------------- )
+
+( tile format: 000000vh 00000000 yyyyyyy xxxxxxx )
+( y and x are multiplied by the plane's tile dimensions )
+( -1 or $FFFFFFFF means transparent, i.e. a blank space )
 
 /OBJECT
     fgetset tm.w tm.w!
@@ -319,10 +350,10 @@ constant /TILEMAP
 
 : draw-as-tilemap  ( - )
     tm.bmp bmp
-    0 locals| tcols b |
+    0 locals| t b |
     b 0 = if exit then
     tm.base 0 = if exit then
-    b al_get_bitmap_width tm.tw f>s / to tcols
+    \ b al_get_bitmap_width tm.tw f>s / to tcols
     
     1 al_hold_bitmap_drawing
     x zoom f* f>s y zoom f* f>s
@@ -341,8 +372,9 @@ constant /TILEMAP
         tm-vrows 0 do
             dup tm-vcols cells bounds do
                 i @ -1 <> if
-                    b i @ tcols /mod swap s>f tm.th f* s>f tm.tw f*
-                        tm.tw tm.th xy flip al_draw_bitmap_region
+                    b   i @ $ff and s>f tm.tw f*
+                        i @ $ff00 and 8 rshift s>f tm.th f*
+                        tm.tw tm.th xy i @ 24 rshift al_draw_bitmap_region                    
                 then
                 x tm.tw f+ x!
             cell +loop
@@ -356,3 +388,5 @@ constant /TILEMAP
     0 al_hold_bitmap_drawing
     al_reset_clipping_rectangle
 ;
+
+: packtile  ( x y flip - )  24 lshift swap 8 lshift or or ;
