@@ -2,6 +2,7 @@ include gamelib1
 require keys.f
 require input.f
 include dev
+include strout
 
 Module editor
 
@@ -16,6 +17,7 @@ Module editor
 1 tm.bmp!
 tm.base constant data
 0 value tile
+true value info
 
 screen map
 screen tiles
@@ -27,13 +29,22 @@ screen tiles
 randomize
 
 : draw-cursor
-    tile edplane mouse swap s>f zoom f/ s>f zoom f/ draw-tile ;
+    edplane {{ 
+    tile edplane
+        mouse swap s>f zoom f/ tm.tw 2e f/ f-
+              s>f zoom f/ tm.th 2e f/ f- draw-tile
+}} ;
+
+: scroll$  zstr[ edplane {{ tm.scrollx f>s . tm.scrolly f>s . }} ]zstr ;
 
 :hook map update
     2x
     0.5e 0.5e 0.5e 1e al_clear_to_color
     edplane {{ draw-as-tilemap }}
     draw-cursor
+    info if 
+        bif 1e 1e 1e 1e 0e viewh 8 - s>f 0 scroll$ al_draw_text
+    then
 ;
 
 :hook map pump
@@ -75,7 +86,8 @@ randomize
     ms0 3 al_mouse_button_down if then
     <e> press if -1 to tile then
     <h> press if tile $01000000 xor to tile then
-    <v> press if tile $02000000 xor to tile then        
+    <v> press if tile $02000000 xor to tile then
+    <i> press if info not to info then
 ;
 
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
@@ -116,4 +128,7 @@ map
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8 )
 cr .( MAP    TILES  OBJS          GAME                    )
+cr
+cr .( --== MAP ==-- )
+cr .( i = toggle info )
 warm

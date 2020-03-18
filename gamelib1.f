@@ -36,13 +36,14 @@ defer system    ' noop is system
 0
 screen-hook update    
 screen-hook pump      
-screen-hook step      
+screen-hook step
+screen-hook resume
 constant /screen
 
 : screen  create /screen allot&erase
     does>
-        \ cr dup >name count type
         to scr
+        resume
 ;
 
 : :hook   ( - <screen> <hook> code; )
