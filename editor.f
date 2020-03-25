@@ -1,8 +1,9 @@
 include gamelib1
+include dev
+
 require keys.f
 require input.f
-include dev
-include strout
+require lib/strout.f
 
 Module editor
 
@@ -27,6 +28,9 @@ screen tiles
     256 256 * 0 do 8 rnd 8 rnd 4 rnd packtile !+ loop
 ;
 randomize
+
+: 2+  rot + >r + r> ;
+: maus  mouse 2 / swap 2 / swap edplane {{ tm.scrollx f>s tm.scrolly f>s }} 2+ ;
 
 : draw-cursor
     edplane {{ 
@@ -56,8 +60,6 @@ randomize
     then
 ;
 
-: 2+  rot + >r + r> ;
-: maus  mouse 2 / swap 2 / swap edplane {{ tm.scrollx f>s tm.scrolly f>s }} 2+ ;
 : tw  edplane {{ tm.tw }} f>s ;
 : th  edplane {{ tm.th }} f>s ;
 
@@ -117,13 +119,13 @@ randomize
     <f5> press if game then
 ;
 
+map
+
 EXPORT edplane
-EXPORT map
 
 End-Module
 
 include main
-map
 
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8 )

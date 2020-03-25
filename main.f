@@ -1,5 +1,5 @@
 require keys.f
-require filelib.f
+require lib/filelib.f
 
 synonym | locals|
 : ]#  ] postpone literal ;

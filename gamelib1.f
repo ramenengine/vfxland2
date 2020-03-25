@@ -2,7 +2,14 @@ finit
 [defined] shutdown [if] shutdown [then]
 empty 
 
+[undefined] max-objects [if] 256 constant max-objects [then]
+[undefined] /object-slot [if] 256 constant /object-slot [then] 
+
+\ ------------------------------------------------------------------------
+
 include allegro-5.2.3.f
+\ require lib/fclean.f
+\ : require  get-order fclean -order requires set-order ;
 
 320 value vieww
 240 value viewh
@@ -38,6 +45,7 @@ screen-hook update
 screen-hook pump      
 screen-hook step
 screen-hook resume
+screen-hook object
 constant /screen
 
 : screen  create /screen allot&erase
@@ -182,9 +190,6 @@ synonym & addr immediate
 
 \ --------------------------------------------------------------
 
-[undefined] max-objects [if] 256 constant max-objects [then]
-[undefined] /object-slot [if] 256 constant /object-slot [then] 
-
 0
 fgetset x x!  \ x pos
 fgetset y y!  \ y pos
@@ -202,7 +207,9 @@ constant /OBJECT
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
 : init-object  0e 0e xy!  1 en! ;
 
-max-objects /object-slot array object
+max-objects /object-slot array (object)
+screen game game
+:hook game object (object) ;
 0 object {{
 
 : btn  kbs0 swap al_key_down ;
@@ -280,8 +287,6 @@ matrix m
 : draw-as-sprite
     0 bmp ?dup if sx s>f sy s>f sw sh x floor y floor flip al_draw_bitmap_region then
 ;
-
-screen game game
 
 :hook game fg
     1 al_hold_bitmap_drawing
