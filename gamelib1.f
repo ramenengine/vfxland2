@@ -1,8 +1,5 @@
 finit
 [defined] shutdown [if] shutdown [then]
-empty only forth definitions
-: dummy ;  \ fixes a bug in VFX when reloading
-
 [undefined] max-objects [if] 256 constant max-objects [then]
 [undefined] /objslot    [if] 256 constant /objslot [then] 
 
@@ -10,7 +7,8 @@ empty only forth definitions
 
 include allegro-5.2.3.f
 require lib/fclean.f
-: require  get-order fclean -order require set-order ;
+: require  get-order depth fclean -order require depth <
+    abort" Stack item(s) left behind" set-order ;
 
 320 value vieww
 240 value viewh
@@ -200,8 +198,8 @@ synonym & addr immediate
 0
     fgetset x x!  \ x pos
     fgetset y y!  \ y pos
-    getset sx sx!
-    getset sy sy! 
+    getset ix ix!
+    getset iy iy! 
     getset attr attr! \ attributes ---- ---- ---- --VH ---- hhhh ---w wwww
     getset en en!
     getset bmp# bmp#!
@@ -209,8 +207,8 @@ constant /OBJECT
 
 : xy  x y ;
 : xy!  y! x! ;
-: sw  attr $1f and 1 + 4 lshift s>f ;
-: sh  attr $f00 and 8 rshift 1 + 4 lshift s>f ;
+: iw  attr $1f and 1 + 4 lshift s>f ;
+: ih  attr $f00 and 8 rshift 1 + 4 lshift s>f ;
 : flip  attr $3000 and 12 rshift ;
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
 : init-object  0e 0e xy!  1 en! ;
@@ -293,7 +291,7 @@ defer hud         ' noop is hud
 matrix m
 
 : draw-as-sprite  ( bitmap# - )
-    bmp ?dup if sx s>f sy s>f sw sh x floor y floor flip al_draw_bitmap_region then
+    bmp ?dup if ix s>f iy s>f iw ih x floor y floor flip al_draw_bitmap_region then
 ;
 
 : draw-sprites ( - )
@@ -326,8 +324,6 @@ matrix m
 ;
 
 ( -------------------------------------------------------------- )
-
-
 
 
 ( -------------------------------------------------------------- )
@@ -426,3 +422,4 @@ constant /TILEMAP
         then
     }}
 ;
+

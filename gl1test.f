@@ -1,4 +1,6 @@
-include gamelib1
+empty only forth definitions
+require gamelib1.f
+
 \ include counter \ <-- Windows only
 
 : sfx  sample @ $100 play ;

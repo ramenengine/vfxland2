@@ -1,8 +1,14 @@
+empty only forth definitions
 require gamelib1.f
+see /objslot
+/objslot
+
+
 require keys.f
 require lib/filelib.f
 require utils.f
 require scene.f
+
 
 :make load-data
     0 z" data/lemming.png" load-bitmap

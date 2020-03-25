@@ -1,4 +1,3 @@
-require gamelib1.f
 require lib/filelib.f
 require utils.f
 require lib/a.f
@@ -9,7 +8,15 @@ require lib/a.f
 0 value tcols
 0 value b
 
-256 /objslot array objdesc
+0
+    64 buffer s.zstm1
+    64 buffer s.zstm2
+    64 buffer s.ziol      \ initial object list path
+\    64 buffer s.zods     \ object descriptions script path
+    fgetset s.w s.w!      \ bounds
+    fgetset s.h s.h!
+constant /scene
+
 /scene 200 array scene
 
 : (convert)  ( n h v - n )
@@ -44,26 +51,11 @@ require lib/a.f
 : clear-layer  ( layer -- )
     {{ tm.base  tm.dims * cells  erase  }} ;
 
-0
-    64 buffer s.zstm1
-    64 buffer s.zstm2
-    64 buffer s.ziol      \ initial object list path
-\    64 buffer s.zods     \ object descriptions script path
-    fgetset s.w s.w!      \ bounds
-    fgetset s.h s.h!
-constant /scene
-
 : scene:  ( i - <name> ) ( - n )
     dup constant scene {{
 ;
 
 : ;scene }} ;
-
-: objdesc: ( n - <name> ) ( - n )
-    dup constant objdesc {{
-;
-
-: ;objdesc }} ;
 
 : load  ( n )
     scene {{
