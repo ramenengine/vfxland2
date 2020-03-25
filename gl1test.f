@@ -21,9 +21,10 @@ create testmap
 6 , 7 , 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 0 , 1 , 2 , 3 , 4 , 5 ,
 7 , 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 0 , 1 , 2 , 3 , 4 , 5 , 6 , 
 
-24 16 plane plane1
+24 16 plane: plane1
+    testmap tm.base 24 16 * cells move
+;plane
 
-testmap tm.base 24 16 * cells move
 
 :make load-data
     0 z" random.png" load-bitmap
@@ -34,6 +35,6 @@ testmap tm.base 24 16 * cells move
     plane1 {{ draw-as-tilemap }} 
 ;
 
-plane1 to me
+plane1 as
 
 warm

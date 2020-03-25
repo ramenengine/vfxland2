@@ -1,51 +1,27 @@
+require gamelib1.f
 require keys.f
 require lib/filelib.f
-
-synonym | locals|
-: ]#  ] postpone literal ;
+require utils.f
+require scene.f
 
 :make load-data
-    1 z" data/tileset.png" load-bitmap
+    0 z" data/lemming.png" load-bitmap
+    1 z" data/test.tiles.png" load-bitmap
+    0 load
 ;
 
-edplane value tm
+0 scene: test
+    z" data/test.test.layer-1.map001.stm" s.zstm1 zmove
+    z" data/test.test.layer-2.map001.stm" s.zstm2 zmove
+    320e s.w! 240e s.h!
+;scene
 
-: tm>dims  {{ tm.w tm.tw f/ f>s tm.h tm.th f/ f>s }} ;
-
-\ : randomize
-\     data a!
-\     tm tm>dims * 0 do 8 rnd 8 rnd 0 packtile !+ loop
-\ ;
-\ randomize
-
-256 256 plane plane1
-: data  plane1 {{ tm.base }} ;
-
-: new-scene  { zstr -- }
-    0 zstr newfile[
-        data plane1 tm>dims * cells write
-        [ lenof object ]# 0 do i object /object-slot write loop
-    ]file
+:make bg
+    lyr1 {{ draw-as-tilemap }} 
+    lyr2 {{ draw-as-tilemap }} 
+;
+:make fg
+    draw-sprites
 ;
 
-: load-scene  { zstr -- }
-    zstr zcount fileExist? not if  zstr new-scene  then
-    zstr file[
-        data plane1 tm>dims * cells read
-        [ lenof object ]# 0 do i object /object-slot read loop        
-    ]
-;
-
-struct /scene
-    256 +field s.zpath
-end-struct
-
-/scene 100 array scene
-
-: scene:  ( i - <name> <path> )
-    dup constant
-    bl parse rot scene s.zpath zplace
-;
-
-: load  ( n ) scene s.zpath load-scene ;
-
+warm

@@ -1,19 +1,19 @@
 finit
 [defined] shutdown [if] shutdown [then]
-empty 
+empty only forth definitions
+: dummy ;  \ fixes a bug in VFX when reloading
 
 [undefined] max-objects [if] 256 constant max-objects [then]
-[undefined] /object-slot [if] 256 constant /object-slot [then] 
+[undefined] /objslot    [if] 256 constant /objslot [then] 
 
 \ ------------------------------------------------------------------------
 
 include allegro-5.2.3.f
-\ require lib/fclean.f
-\ : require  get-order fclean -order requires set-order ;
+require lib/fclean.f
+: require  get-order fclean -order require set-order ;
 
 320 value vieww
 240 value viewh
-
 0 value displayw
 0 value displayh
 0 value display
@@ -151,7 +151,7 @@ synonym rnd choose
 : frnd  1000e f* f>s choose s>f 1000e f/ ;
 : :make  :noname  postpone [  [compile] is  ] ;
 : ]#  ] postpone literal ;
-: |  postpone locals| ; immediate
+synonym | locals| immediate
 synonym /allot allot&erase
 : allotment  here >r /allot r> ;
 synonym gild freeze
@@ -183,20 +183,28 @@ synonym & addr immediate
 : (getter)  ( ofs - <name> ofs ) create dup , does> @ me + @ ;
 : (setter)  ( ofs - <name> ofs ) create dup , does> @ me + ! ;
 : getset  (getter) (setter) cell+ ;
+: buffer  create over , + does> @ me + ;
+
 
 16 stack objstack
 : {{  me objstack push to me ;
 : }}  objstack pop to me ;
-
+: as  to me ;
+: 's
+    state @ if  s" me >r to me" evaluate bl parse evaluate s" r> to me" evaluate
+    exit then   s" {{" evaluate bl parse evaluate s" }}" evaluate ; immediate
+    
+    
 \ --------------------------------------------------------------
 
 0
-fgetset x x!  \ x pos
-fgetset y y!  \ y pos
-getset sx sx!
-getset sy sy! 
-getset attr attr! \ attributes ---- ---- ---- --VH ---- hhhh ---w wwww
-getset en en!
+    fgetset x x!  \ x pos
+    fgetset y y!  \ y pos
+    getset sx sx!
+    getset sy sy! 
+    getset attr attr! \ attributes ---- ---- ---- --VH ---- hhhh ---w wwww
+    getset en en!
+    getset .bmp#! .bmp#!
 constant /OBJECT
 
 : xy  x y ;
@@ -207,14 +215,14 @@ constant /OBJECT
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
 : init-object  0e 0e xy!  1 en! ;
 
-max-objects /object-slot array (object)
+max-objects /objslot array (object)
 screen game game
 :hook game object (object) ;
-0 object {{
+0 object to me
 
 : btn  kbs0 swap al_key_down ;
 
-8 cell array bitmap
+128 cell array bitmap
 : bmp  bitmap @ ;
 : bmp! bitmap ! ;
 
@@ -284,17 +292,21 @@ defer hud         ' noop is hud
 : matrix  create 16 cells allot ;
 matrix m
 
-: draw-as-sprite
-    0 bmp ?dup if sx s>f sy s>f sw sh x floor y floor flip al_draw_bitmap_region then
+: draw-as-sprite  ( bitmap# - )
+    bmp ?dup if sx s>f sy s>f sw sh x floor y floor flip al_draw_bitmap_region then
 ;
 
-:hook game fg
+: draw-sprites ( - )
     1 al_hold_bitmap_drawing
     max-objects 0 do
         i object to me
-        en if draw-as-sprite then
+        en if .bmp#! @ draw-as-sprite then
     loop
     0 al_hold_bitmap_drawing
+;
+
+:make fg
+    draw-sprites
 ;
 
 : 2x
@@ -327,26 +339,30 @@ matrix m
 /OBJECT
     fgetset tm.w tm.w!
     fgetset tm.h tm.h!
-    getset tm.bmp tm.bmp!       \ index
+    getset tm.rows tm.rows!
+    getset tm.cols tm.cols!
+    
+    getset tm..bmp#! tm.bmp!       \ index
     getset tm.stride tm.stride!
-    getset tm.base tm.base!
+    getset tm.base tm.base!     \ address
     fgetset tm.tw tm.tw!
     fgetset tm.th tm.th!
     fgetset tm.scrollx tm.scrollx!
     fgetset tm.scrolly tm.scrolly!
 constant /TILEMAP
 
-: scroll!  tm.scrolly! tm.scrollx! ;
-
-: plane  ( w h - <name> )  \ w and h in tiles and defines the buffer size
+: plane:  ( w h - <name> )  \ w and h in tiles and defines the buffer size
     create here {{ /tilemap /allot
     init-object
+    2dup tm.cols! tm.rows!
     2dup * cells allotment tm.base!
     over cells tm.stride!
     16e tm.tw! 16e tm.th!
     s>f tm.th f* viewh s>f fmin tm.h!
     s>f tm.tw f* vieww s>f fmin tm.w!    
 ;
+
+: ;plane  }} ;
  
 0e fvalue ox
 0e fvalue oy
@@ -356,7 +372,7 @@ constant /TILEMAP
 : tm-vcols  tm.w tm.tw f/ f>s 1 + ;
 
 : draw-as-tilemap  ( - )
-    tm.bmp bmp
+    tm..bmp#! bmp
     0 locals| t b |
     b 0 = if exit then
     tm.base 0 = if exit then
@@ -396,17 +412,18 @@ constant /TILEMAP
     al_reset_clipping_rectangle
 ;
 
-: packtile  ( x y flip - )  24 lshift swap 8 lshift or or ;
+: pack-tile  ( x y flip - )  24 lshift swap 8 lshift or or ;
 
 0e fvalue dx
 0e fvalue dy
 
 : draw-tile ( tile plane f: x y - )
     to dy to dx
-    {{ | t |
-        tm.bmp bmp ?dup if 
+    {{ locals| t |
+        tm..bmp#! bmp ?dup if 
             t $ff and s>f tm.tw f*
             t $ff00 and 8 rshift s>f tm.th f*
             tm.tw tm.th dx dy t 24 rshift al_draw_bitmap_region
         then
-    }} ;
+    }}
+;

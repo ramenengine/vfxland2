@@ -46,8 +46,8 @@ synonym nip   fnip
 synonym 4dup  f4dup
 synonym rot   frot
 
-: f[ fclean +order ;
-: ]f fclean -order ;
+: [f] fclean +order ; immediate
+: [d] fclean -order ; immediate
 
 
 fclean -order only forth definitions

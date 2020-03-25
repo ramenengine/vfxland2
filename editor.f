@@ -4,12 +4,7 @@ include dev
 require keys.f
 require input.f
 require lib/strout.f
-
-Module editor
-
-0 value a
-: a!  to a ;
-: !+  a !  cell +to a ;
+require lib/a.f
 
 ( maybe pass in the dimensions and source address on the stack ... )
 
@@ -116,21 +111,16 @@ randomize
 :make system
     <f1> press if map then
     <f2> press if tiles then
-    <f5> press if game then
+\    <f5> press if game then
 ;
 
 map
 
-EXPORT edplane
-
-End-Module
-
-include main
-
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8 )
-cr .( MAP    TILES  OBJS          GAME                    )
+cr .( MAP    TILES                                        )
 cr
 cr .( --== MAP ==-- )
 cr .( i = toggle info )
+
 warm
