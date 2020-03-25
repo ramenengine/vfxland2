@@ -204,7 +204,7 @@ synonym & addr immediate
     getset sy sy! 
     getset attr attr! \ attributes ---- ---- ---- --VH ---- hhhh ---w wwww
     getset en en!
-    getset .bmp#! .bmp#!
+    getset bmp# bmp#!
 constant /OBJECT
 
 : xy  x y ;
@@ -300,7 +300,7 @@ matrix m
     1 al_hold_bitmap_drawing
     max-objects 0 do
         i object to me
-        en if .bmp#! @ draw-as-sprite then
+        en if bmp# draw-as-sprite then
     loop
     0 al_hold_bitmap_drawing
 ;
@@ -341,8 +341,7 @@ matrix m
     fgetset tm.h tm.h!
     getset tm.rows tm.rows!
     getset tm.cols tm.cols!
-    
-    getset tm..bmp#! tm.bmp!       \ index
+    getset tm.bmp# tm.bmp#!       \ index
     getset tm.stride tm.stride!
     getset tm.base tm.base!     \ address
     fgetset tm.tw tm.tw!
@@ -372,7 +371,7 @@ constant /TILEMAP
 : tm-vcols  tm.w tm.tw f/ f>s 1 + ;
 
 : draw-as-tilemap  ( - )
-    tm..bmp#! bmp
+    tm.bmp# bmp
     0 locals| t b |
     b 0 = if exit then
     tm.base 0 = if exit then
@@ -420,7 +419,7 @@ constant /TILEMAP
 : draw-tile ( tile plane f: x y - )
     to dy to dx
     {{ locals| t |
-        tm..bmp#! bmp ?dup if 
+        tm.bmp# bmp ?dup if 
             t $ff and s>f tm.tw f*
             t $ff00 and 8 rshift s>f tm.th f*
             tm.tw tm.th dx dy t 24 rshift al_draw_bitmap_region

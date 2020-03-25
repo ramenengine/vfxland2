@@ -3,13 +3,14 @@ require lib/filelib.f
 require utils.f
 require lib/a.f
 
-256 256 plane: lyr1 1 tm.bmp! ;plane
-256 256 plane: lyr2 1 tm.bmp! ;plane
+256 256 plane: lyr1 1 tm.bmp#! ;plane
+256 256 plane: lyr2 1 tm.bmp#! ;plane
 
 0 value tcols
 0 value b
 
 256 /objslot array objdesc
+/scene 200 array scene
 
 : (convert)  ( n h v - n )
     1 lshift or 24 lshift swap
@@ -23,7 +24,7 @@ require lib/a.f
         0 sp@ 2 read ( w ) dup tm.cols! cells tm.stride!
         0 sp@ 2 read ( h ) tm.rows!
         tm.base  bytes-left read
-        tm..bmp#! bmp ?dup 0= abort" Tilemap's referenced bitmap is null!"
+        tm.bmp# bmp ?dup 0= abort" Tilemap's referenced bitmap is null!"
             to b
         b bmpw tm.tw f>s / to tcols
         tm.base  tm.dims * cells bounds do
@@ -51,8 +52,6 @@ require lib/a.f
     fgetset s.w s.w!      \ bounds
     fgetset s.h s.h!
 constant /scene
-
-/scene 200 array scene
 
 : scene:  ( i - <name> ) ( - n )
     dup constant scene {{
