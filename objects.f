@@ -7,6 +7,7 @@
     fgetset vy vy!
 drop
 
+128 constant /userfields
 
 max-objdescs /objslot array objdesc
 max-objdescs  256 cells array sdata  \ static data
@@ -35,4 +36,15 @@ value /sdata
 
 : become  objdesc me /objslot move ;
 
-0 include lemming.f
+: script  ( n - <name> )
+    false to warnings?
+    include
+    true to warnings?
+;
+
+: changed  ( - <name> )
+    false to warnings?
+    >in @ ' >body @ swap >in ! bl parse GetPathSpec included
+    true to warnings? ;
+
+0 script lemming

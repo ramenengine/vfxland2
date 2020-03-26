@@ -205,8 +205,8 @@ constant /OBJECT
 
 : xy  x y ;
 : xy!  y! x! ;
-: iw  attr $1f and 1 + 4 lshift s>f ;
-: ih  attr $f00 and 8 rshift 1 + 4 lshift s>f ;
+: iw  attr $1f and 1 + 4 lshift ;
+: ih  attr $f00 and 8 rshift 1 + 4 lshift ;
 : flip  attr $3000 and 12 rshift ;
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
 : init-object  0e 0e xy!  1 en! ;
@@ -289,7 +289,7 @@ defer hud         ' noop is hud
 matrix m
 
 : draw-as-sprite  ( bitmap# - )
-    bmp ?dup if ix s>f iy s>f iw ih x floor y floor flip al_draw_bitmap_region then
+    bmp ?dup if ix s>f iy s>f iw s>f ih s>f x floor y floor flip al_draw_bitmap_region then
 ;
 
 : draw-sprites ( - )

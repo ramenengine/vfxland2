@@ -33,7 +33,7 @@ include objects
 ;
 
 0 object as
-`lemming become
+lemming become
 100e 150e xy!
 
 warm
