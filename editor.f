@@ -1,3 +1,4 @@
+empty only forth definitions
 include gamelib1
 include dev
 
@@ -8,10 +9,12 @@ require lib/a.f
 
 ( maybe pass in the dimensions and source address on the stack ... )
 
-256 256 plane edplane
-16e tm.tw! 16e tm.th!
-1 tm.bmp!
-tm.base constant data
+256 256 plane: edplane 
+    16e tm.tw! 16e tm.th!
+    1 tm.bmp#!
+    tm.base constant data
+;plane
+
 0 value tile
 true value info
 
@@ -20,7 +23,7 @@ screen tiles
 
 : randomize
     data a!
-    256 256 * 0 do 8 rnd 8 rnd 4 rnd packtile !+ loop
+    256 256 * 0 do 8 rnd 8 rnd 4 rnd pack-tile !+ loop
 ;
 randomize
 
@@ -65,7 +68,7 @@ randomize
 :hook map step
     ?refresh
     ms0 1 al_mouse_button_down if
-        <SPACE> kdown  if
+        <SPACE> held  if
             edplane {{
                 walt tm.scrolly s>f f- 0e fmax tm.scrolly!
                     tm.scrollx s>f f- 0e fmax tm.scrollx!
@@ -122,5 +125,9 @@ cr .( MAP    TILES                                        )
 cr
 cr .( --== MAP ==-- )
 cr .( i = toggle info )
+
+:make load-data
+    1 z" random.png" load-bitmap
+;
 
 warm

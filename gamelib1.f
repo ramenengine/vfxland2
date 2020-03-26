@@ -11,10 +11,7 @@ require lib/fclean.f
 
 320 value vieww
 240 value viewh
-0 value displayw
-0 value displayh
 0 value display
-0 value monitorw
 create kbs0 /ALLEGRO_KEYBOARD_STATE allot&erase
 create kbs1 /ALLEGRO_KEYBOARD_STATE allot&erase
 create ms0 /ALLEGRO_MOUSE_STATE allot&erase
@@ -85,18 +82,19 @@ constant /screen
     al_install_keyboard check
     al_install_mouse check
     al_install_touch_input check
-    ALLEGRO_VSYNC 1 0 al_set_new_display_option
-\    ALLEGRO_FULLSCREEN_WINDOW al_set_new_display_flags
-\    ALLEGRO_FULLSCREEN al_set_new_display_flags
-\    0 0 al_create_display to display
-    640 480 al_create_display to display
-    display al_get_display_width to displayw
-    display al_get_display_height to displayh
-    \ 0 mi al_get_monitor_info drop
-    \ mi cell+ cell+ @ to monitorw
-    \ 1920 to monitorw
-    \ display monitorw displayw - 0 al_set_window_position
-    display 0 0 al_set_window_position
+    ALLEGRO_VSYNC 1 2 al_set_new_display_option
+    ALLEGRO_SINGLE_BUFFER 1 2 al_set_new_display_option     \ gets us one less
+                                                            \ frame of input lag
+    
+    [defined] fullscreen [if]
+        \ ALLEGRO_FULLSCREEN_WINDOW al_set_new_display_flags
+        \ 0 0 al_create_display to display
+        ALLEGRO_FULLSCREEN al_set_new_display_flags
+        640 480 al_create_display to display
+    [else]
+        640 480 al_create_display to display
+        display 0 0 al_set_window_position
+    [then]
     0 to mixer  0 to voice
     64 al_reserve_samples 0= abort" Allegro: Error reserving samples." 
     +audio
@@ -105,6 +103,10 @@ constant /screen
     queue                al_get_mouse_event_source    al_register_event_source
     queue                al_get_keyboard_event_source al_register_event_source
     al_create_builtin_font to bif
+;
+: shutdown
+    deinit
+    al_uninstall_system
 ;
 : go
     begin
@@ -119,6 +121,7 @@ constant /screen
         begin queue alevt al_get_next_event while pump repeat
         step
     kbs0 59 al_key_down until
+    [defined] fullscreen [if] shutdown bye [then]
 ;
 : init
     init-allegro
@@ -128,10 +131,6 @@ constant /screen
 : warm
     init
     go
-;
-: shutdown
-    deinit
-    al_uninstall_system
 ;
 : cold
     warm

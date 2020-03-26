@@ -1,11 +1,11 @@
-: kdown  kbs0 swap al_key_down ;
-: kup    kdown not ;
-: kdelta dup kdown kbs1 rot al_key_down - ;
+: held   kbs0 swap al_key_down ;
+: letgo  held not ;
+: kdelta dup held kbs1 rot al_key_down - ;
 : press   kdelta 1 = ;
 : rel     kdelta -1 = ;
-: shift? 215 kdown 216 kdown or ;
-: ctrl? 217 kdown 218 kdown or ;
-: alt?  219 kdown 220 kdown or ;
+: shift? 215 held 216 held or ;
+: ctrl? 217 held 218 held or ;
+: alt?  219 held 220 held or ;
 : mouse  ms0 0 al_get_mouse_state_axis ms0 1 al_get_mouse_state_axis ;
 : mickey ms1 0 al_get_mouse_state_axis ms1 1 al_get_mouse_state_axis ;
 : 2-  rot swap - >r - r> ;
