@@ -3,4 +3,7 @@ objdesc: `lemming
 ;objdesc
 
 
-`lemming :: think  4e frnd 2e f- vx!  4e frnd 2e f- vy!  ;
+`lemming :: think
+    <left> held if x 1e f- x! then
+    <right> held if x 1e f+ x! then
+;
