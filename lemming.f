@@ -1,6 +1,6 @@
 objdesc: `lemming
-    0 ix! 224 iy!
+    224 ix! 0 iy!
 ;objdesc
 
 
-`lemming :: think  1 . ;
+`lemming :: think  4e frnd 2e f- vx!  4e frnd 2e f- vy!  ;

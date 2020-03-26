@@ -1,5 +1,4 @@
 finit
-[defined] shutdown [if] shutdown [then]
 [undefined] max-objects [if] 256 constant max-objects [then]
 [undefined] /objslot    [if] 256 constant /objslot [then] 
 
@@ -7,8 +6,8 @@ finit
 
 include allegro-5.2.3.f
 require lib/fclean.f
-: require  get-order depth fclean -order require depth <
-    abort" Stack item(s) left behind" set-order ;
+: require  get-order depth >R fclean -order require depth R> >
+    abort"  Stack item(s) left behind" set-order ;
 
 320 value vieww
 240 value viewh
@@ -423,3 +422,4 @@ constant /TILEMAP
     }}
 ;
 
+: empty  shutdown empty ;

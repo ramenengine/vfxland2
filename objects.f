@@ -3,26 +3,27 @@
 /OBJECT
     getset objtype objtype!
     getset action# action#!
+    fgetset vx vx!
+    fgetset vy vy!
 drop
 
 
 max-objdescs /objslot array objdesc
+max-objdescs  256 cells array sdata  \ static data
 
 : objdesc: ( n - <name> ) ( - n )
     dup constant dup objdesc {{
-    objtype !
+    objtype!
+    true en!
 ;
 
 : ;objdesc }} ;
 
-
-max-objdescs 256 cells array sdata  \ static data
-
 : (vector!) create dup , does> @ objtype sdata + ! ;
 : (vector) create dup , does> @ objtype sdata + @ execute ;
 : vector  (vector) (vector!) cell+ ;
-: ::  ( objtype - <vector> )
-    {{ :noname ' >body @ objtype sdata + ! }} ;
+: ::  ( objdesc - <vector> )
+    objdesc {{ :noname ' >body @ objtype sdata + ! }} ;
 
 
 ( TODO: actions )
@@ -32,6 +33,6 @@ max-objdescs 256 cells array sdata  \ static data
     vector think think!   \ temporary
 value /sdata
 
-
+: become  objdesc me /objslot move ;
 
 0 include lemming.f
