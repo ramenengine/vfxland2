@@ -6,3 +6,19 @@ synonym | locals|
 
 : tm.dims  tm.cols tm.rows ;
 : tm.scroll!  tm.scrolly! tm.scrollx! ;
+
+create zbuf  256 allot
+: z$   zcount zbuf zplace  zbuf ;
+: z+  >r zcount r@ zappend r> ;
+: s>z  zbuf zplace  zbuf ;
+
+also system
+: Z+"  
+  [char] " parse >SyspadZ z+
+;
+ndcs: ( -- )
+  postpone (z")  [char] " parse z$,  postpone z+ 
+  discard-sinline  ;
+previous
+
+synonym file-exists fileExist? 

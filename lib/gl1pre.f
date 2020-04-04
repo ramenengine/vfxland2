@@ -2,6 +2,24 @@ finit
 [undefined] max-objects [if] 256 constant max-objects [then]
 [undefined] /objslot    [if] 256 constant /objslot [then] 
 
+
+\ ------------------------------------------------------------------------
+
+0 value dev
+0 value fullscreen
+0 value mswin
+
+:noname
+    CommandLine 2drop
+    argc 1 ?do
+        i argv[ zcount 
+            2dup s" -dev" compare 0= dev or to dev 
+            2dup s" -fullscreen" compare 0= fullscreen or to fullscreen 
+            2dup s" -mswin" compare 0= mswin or to mswin
+        2drop 
+    loop
+; execute
+
 \ ------------------------------------------------------------------------
 
 include allegro-5.2.3.f
@@ -77,14 +95,13 @@ constant /screen
     al_install_audio 0= abort" Error installing audio."
     al_install_haptic check
     al_install_joystick check
-    al_install_keyboard check
     al_install_mouse check
     al_install_touch_input check
     ALLEGRO_VSYNC 1 2 al_set_new_display_option
     ALLEGRO_SINGLE_BUFFER 1 2 al_set_new_display_option     \ gets us one less
                                                             \ frame of input lag
     
-    [defined] fullscreen [if]
+    [ fullscreen ] [if]
         \ ALLEGRO_FULLSCREEN_WINDOW al_set_new_display_flags
         \ 0 0 al_create_display to display
         ALLEGRO_FULLSCREEN al_set_new_display_flags
@@ -99,7 +116,6 @@ constant /screen
     al_create_event_queue to queue
     queue  display       al_get_display_event_source  al_register_event_source
     queue                al_get_mouse_event_source    al_register_event_source
-    queue                al_get_keyboard_event_source al_register_event_source
     al_create_builtin_font to bif
 ;
 
@@ -147,7 +163,9 @@ synonym & addr immediate
 : (setter)  ( ofs - <name> ofs ) create dup , does> @ me + ! ;
 : getset  (getter) (setter) cell+ ;
 : buffer  create over , + does> @ me + ;
-
+: (zgetter)  ( ofs size - <name> ofs ) create over , does> @ me + ;
+: (zsetter)  ( ofs size - <name> ofs ) create over , does> @ me + zmove ;
+: zgetset  (zgetter) (zsetter) + ;
 
 16 stack objstack
 : {{  me objstack push to me ;
@@ -377,3 +395,36 @@ constant /TILEMAP
 :while game update
     2x cls draw-sprites
 ;
+
+\ ---------------------------------------------------------------
+
+dev [if]
+    mswin [if] include counter [then]
+    
+    mswin [if]
+        extern void * GetForegroundWindow( );
+        extern bool SetForegroundWindow( void * hwnd );
+        
+        GetForegroundWindow constant vfx-hwnd
+    [then]
+
+    
+    lenof bitmap 256 array zbmp-file
+    lenof bitmap cell array bmp-mtime
+    
+    : as-to expose-module ;
+    
+    : mtime@
+        al_create_fs_entry >r
+        r@ al_get_fs_entry_mtime 
+        r> al_destroy_fs_entry 
+    ;
+    
+    ( extend load-bitmap to record the path and time modified )
+    : load-bitmap  ( i zstr - )
+        2dup
+        2dup load-bitmap
+        zcount rot zbmp-file swap 1 + move
+        ( i zstr ) mtime@ swap bmp-mtime !
+    ;
+[then]

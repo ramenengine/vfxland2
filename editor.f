@@ -120,6 +120,8 @@ map
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8 )
 cr .( MAP    TILES  ATTRS                                 )
+cr .( Ctrl+Func = Load )
+cr .( Ctrl+S = Save everything )
 cr
 cr .( --== MAP ==-- )
 cr .( i = toggle info )

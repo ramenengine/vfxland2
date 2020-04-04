@@ -13,4 +13,4 @@
 // type: command
 // version: 1.1.5
 // =================================
-VfxForth developer.lnk
+"VfxForth developer.lnk" -dev -mswin
