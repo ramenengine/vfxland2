@@ -1,13 +1,10 @@
 empty only forth definitions
-include gamelib1
+include lib/gl1pre
 include dev
-
 require keys.f
 require input.f
 require lib/strout.f
 require lib/a.f
-
-( maybe pass in the dimensions and source address on the stack ... )
 
 256 256 plane: edplane 
     16e tm.tw! 16e tm.th!
@@ -20,6 +17,7 @@ true value info
 
 screen map
 screen tiles
+screen attributes
 
 : randomize
     data a!
@@ -39,7 +37,7 @@ randomize
 
 : scroll$  zstr[ edplane {{ tm.scrollx f>s . tm.scrolly f>s . }} ]zstr ;
 
-:hook map update
+:while map update
     2x
     0.5e 0.5e 0.5e 1e al_clear_to_color
     edplane {{ draw-as-tilemap }}
@@ -49,7 +47,7 @@ randomize
     then
 ;
 
-:hook map pump
+:while map pump
     etype ALLEGRO_EVENT_MOUSE_BUTTON_DOWN = if
 \        cr
 \        alevt MOUSE_EVENT.x ?
@@ -65,7 +63,7 @@ randomize
     1 zbmp-file mtime@ 1 bmp-mtime @ > if 50 ms load-data then
 ;
 
-:hook map step
+:while map step
     ?refresh
     ms0 1 al_mouse_button_down if
         <SPACE> held  if
@@ -92,7 +90,7 @@ randomize
 
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
 
-:hook tiles update
+:while tiles update
     2x cls
     0e 0e 1 bmp bmpwh swap s>f s>f
         1e 0e 1e 1e al_draw_filled_rectangle
@@ -101,7 +99,7 @@ randomize
     100000 0 do loop \ fsr fixes choppiness
 ;
 
-:hook tiles step
+:while tiles step
     ?refresh
     ms0 1 al_mouse_button_down if
         edplane {{
@@ -111,23 +109,24 @@ randomize
     then
 ;
 
-:make system
+: system
     <f1> press if map then
     <f2> press if tiles then
-\    <f5> press if game then
+    <f3> press if attributes then
 ;
 
 map
 
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8 )
-cr .( MAP    TILES                                        )
+cr .( MAP    TILES  ATTRS                                 )
 cr
 cr .( --== MAP ==-- )
 cr .( i = toggle info )
 
-:make load-data
+: load-data
     1 z" random.png" load-bitmap
 ;
 
+include lib/gl1post
 warm

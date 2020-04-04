@@ -1,5 +1,5 @@
 empty only forth definitions
-require gamelib1.f
+include lib/gl1pre 
 
 \ include counter \ <-- Windows only
 
@@ -28,15 +28,17 @@ create testmap
 ;plane
 
 
-:make load-data
+: load-data
     0 z" random.png" load-bitmap
     0 z" data/link.wav" load-sample
 ;
 
-:make bg
+:while game update
+    2x cls
     plane1 {{ draw-as-tilemap }} 
 ;
 
 plane1 as
 
+include lib/gl1post
 warm

@@ -23,11 +23,9 @@ create mi /ALLEGRO_MONITOR_INFO allot&erase
 create alevt 256 allot&erase
 0 value bif  \ builtin font
 
-defer load-data ' noop is load-data
-defer init-game ' noop is init-game
-defer deinit    ' noop is deinit
-defer system    ' noop is system
-
+: load-data ;
+: init-game ;
+: system    ;
 
 0 value scr
 
@@ -35,11 +33,11 @@ defer system    ' noop is system
 : screen-hook  create dup , cell+ does> @ scr + @ execute ;
 
 0
-screen-hook update    
-screen-hook pump      
-screen-hook step
-screen-hook resume
-screen-hook object
+    screen-hook update    
+    screen-hook pump      
+    screen-hook step
+    screen-hook resume
+    screen-hook object
 constant /screen
 
 : screen  create /screen allot&erase
@@ -48,7 +46,7 @@ constant /screen
         resume
 ;
 
-: :hook   ( - <screen> <hook> code; )
+: :while   ( - <screen> <hook> code; )
     :noname ' >body ' >body @ + ! ;
 
 : -audio
@@ -104,38 +102,8 @@ constant /screen
     queue                al_get_keyboard_event_source al_register_event_source
     al_create_builtin_font to bif
 ;
-: shutdown
-    deinit
-    al_uninstall_system
-;
-: go
-    begin
-        update
-        display al_flip_display
-        pause
-        kbs0 kbs1 /ALLEGRO_KEYBOARD_STATE move
-        kbs0 al_get_keyboard_state
-        ms0 ms1 /ALLEGRO_MOUSE_STATE move
-        ms0 al_get_mouse_state
-        system
-        begin queue alevt al_get_next_event while pump repeat
-        step
-    kbs0 59 al_key_down until
-    [defined] fullscreen [if] shutdown bye [then]
-;
-: init
-    init-allegro
-    load-data
-    init-game
-;
-: warm
-    init
-    go
-;
-: cold
-    warm
-    shutdown
-;
+
+( -------------------------------------------------------------- )
 
 : etype  ( - ALLEGRO_EVENT_TYPE )  alevt ALLEGRO_EVENT.type @ ;
 : keycode  alevt KEYBOARD_EVENT.keycode @ ;
@@ -145,7 +113,6 @@ constant /screen
 
 synonym rnd choose
 : frnd  1000e f* f>s choose s>f 1000e f/ ;
-: :make  :noname  postpone [  [compile] is  ] ;
 : ]#  ] postpone literal ;
 synonym | locals| immediate
 synonym /allot allot&erase
@@ -213,7 +180,7 @@ constant /OBJECT
 
 max-objects /objslot array (object)
 screen game game
-:hook game object (object) ;
+:while game object (object) ;
 0 object to me
 
 : btn  kbs0 swap al_key_down ;
@@ -249,7 +216,7 @@ screen game game
     [ lenof sample ]# 0 do i sample @ -sample loop
 ;
 
-:make deinit
+: deinit
     destroy-bitmaps
     destroy-samples
 ;
@@ -272,10 +239,6 @@ screen game game
     strm r> al_set_audio_stream_playmode drop
     strm mixer al_attach_audio_stream_to_mixer drop
 ;
-
-defer bg          ' noop is bg
-defer fg          ' noop is fg
-defer hud         ' noop is hud
 
 0e fvalue fgr  0e fvalue fgg  0e fvalue fgb  1e fvalue fga
 0e fvalue bgr  0e fvalue bgg  1e fvalue bgb 
@@ -301,9 +264,6 @@ matrix m
     0 al_hold_bitmap_drawing
 ;
 
-:make fg
-    draw-sprites
-;
 
 : 2x
     m al_identity_transform
@@ -314,15 +274,6 @@ matrix m
 : cls 
     bgr bgg bgb 1e al_clear_to_color
 ;
-
-:hook game update
-    me >r
-        2x cls bg fg hud
-    r> to me
-;
-
-( -------------------------------------------------------------- )
-
 
 ( -------------------------------------------------------------- )
 
@@ -421,4 +372,8 @@ constant /TILEMAP
     }}
 ;
 
-: empty  shutdown empty ;
+\ ---------------------------------------------------------------
+
+:while game update
+    2x cls draw-sprites
+;
