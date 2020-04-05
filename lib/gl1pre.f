@@ -162,18 +162,21 @@ synonym & addr immediate
 : (getter)  ( ofs - <name> ofs ) create dup , does> @ me + @ ;
 : (setter)  ( ofs - <name> ofs ) create dup , does> @ me + ! ;
 : getset  (getter) (setter) cell+ ;
-: buffer  create over , + does> @ me + ;
-: (zgetter)  ( ofs size - <name> ofs ) create over , does> @ me + ;
-: (zsetter)  ( ofs size - <name> ofs ) create over , does> @ me + zmove ;
+: field    create over , + does> @ me + ;
+: third  2 pick ;
+: field[]  ( ofs n size - <name> ofs ) create third , dup , * +
+                                        does> 2@ swap ( n ofs size ) rot * + me + ;
+: (zgetter)  ( ofs size - <name> ofs size ) create over , does> @ me + ;
+: (zsetter)  ( ofs size - <name> ofs size ) create over , does> @ me + zmove ;
 : zgetset  (zgetter) (zsetter) + ;
 
 16 stack objstack
-: {{  me objstack push to me ;
-: }}  objstack pop to me ;
+: [[  me objstack push to me ;
+: ]]  objstack pop to me ;
 : as  to me ;
 : 's
-    state @ if  s" me >r to me" evaluate bl parse evaluate s" r> to me" evaluate
-    exit then   s" {{" evaluate bl parse evaluate s" }}" evaluate ; immediate
+    state @ if  s" me >r to me" evaluate bl parse evaluate s" r> to me" evaluate exit then   
+    s" [[" evaluate bl parse evaluate s" ]]" evaluate ; immediate
     
     
 \ --------------------------------------------------------------
@@ -208,15 +211,19 @@ screen game game
 : bmp! bitmap ! ;
 
 : ?LOADBMP  ( var zstr )
-    dup zcount FileExist? if
+    dup 0= if swap ! exit then
+    dup zcount FileExist? if        
         over @ ?dup if al_destroy_bitmap then
+        cr dup zcount type
         al_load_bitmap swap !
     else drop drop then
 ;
 
 : ?LOADSMP  ( var zstr )
+    dup 0= if swap ! exit then
     dup zcount FileExist? if
         over @ ?dup if al_destroy_sample then
+        cr dup zcount type
         al_load_sample swap !
     else drop drop then
 ;
@@ -295,8 +302,7 @@ matrix m
 
 ( -------------------------------------------------------------- )
 
-( tile format: 000000vh 00000000 yyyyyyy xxxxxxx )
-( y and x are multiplied by the plane's tile dimensions )
+( tile format: 000000vh 00000000 nnnnnnnn nnnnnnnn )
 ( -1 or $FFFFFFFF means transparent, i.e. a blank space )
 
 /OBJECT
@@ -313,22 +319,28 @@ matrix m
     fgetset tm.scrolly tm.scrolly!
 constant /TILEMAP
 
+: init-tilemap
+    init-object    
+    16e tm.tw! 16e tm.th!            \ default tile size
+    vieww s>f tm.w! viewh s>f tm.h!  \ default dimensions
+;
+
 : plane:  ( w h - <name> )  \ w and h in tiles and defines the buffer size
-    create here {{ /tilemap /allot
-    init-object
+    create here [[ /tilemap /allot
+    init-tilemap
     2dup tm.cols! tm.rows!
     2dup * cells allotment tm.base!
     over cells tm.stride!
-    16e tm.tw! 16e tm.th!
     s>f tm.th f* viewh s>f fmin tm.h!
     s>f tm.tw f* vieww s>f fmin tm.w!    
 ;
 
-: ;plane  }} ;
+: ;plane  ]] ;
  
 0e fvalue ox
 0e fvalue oy
 0e fvalue rx
+0 value tcols
 
 : tm-vrows  tm.h tm.th f/ f>s 1 + ;
 : tm-vcols  tm.w tm.tw f/ f>s 1 + ;
@@ -338,7 +350,7 @@ constant /TILEMAP
     0 locals| t b |
     b 0 = if exit then
     tm.base 0 = if exit then
-    \ b al_get_bitmap_width tm.tw f>s / to tcols
+    b al_get_bitmap_width tm.tw f>s / to tcols
     
     1 al_hold_bitmap_drawing
     x zoom f* f>s y zoom f* f>s
@@ -357,9 +369,8 @@ constant /TILEMAP
         tm-vrows 0 do
             dup tm-vcols cells bounds do
                 i @ -1 <> if
-                    b   i @ $ff and s>f tm.tw f*
-                        i @ $ff00 and 8 rshift s>f tm.th f*
-                        tm.tw tm.th xy i @ 24 rshift al_draw_bitmap_region                    
+                    b   i @ $ffff and tcols /mod swap s>f tm.tw f* s>f tm.th f*
+                        tm.tw tm.th xy i @ 24 rshift al_draw_bitmap_region
                 then
                 x tm.tw f+ x!
             cell +loop
@@ -374,20 +385,20 @@ constant /TILEMAP
     al_reset_clipping_rectangle
 ;
 
-: pack-tile  ( x y flip - )  24 lshift swap 8 lshift or or ;
+: pack-tile  ( n flip - )  24 lshift or ;
 
 0e fvalue dx
 0e fvalue dy
 
 : draw-tile ( tile plane f: x y - )
     to dy to dx
-    {{ locals| t |
-        tm.bmp# bmp ?dup if 
-            t $ff and s>f tm.tw f*
-            t $ff00 and 8 rshift s>f tm.th f*
+    [[ locals| t |
+        tm.bmp# bmp ?dup if
+            tm.bmp# bmp al_get_bitmap_width tm.tw f>s / to tcols
+            t $ffff and tcols /mod swap s>f tm.tw f* s>f tm.th f*
             tm.tw tm.th dx dy t 24 rshift al_draw_bitmap_region
         then
-    }}
+    ]]
 ;
 
 \ ---------------------------------------------------------------

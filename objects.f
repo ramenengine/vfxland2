@@ -13,18 +13,18 @@ max-objdescs /objslot array objdesc
 max-objdescs  256 cells array sdata  \ static data
 
 : objdesc: ( n - <name> ) ( - n )
-    dup constant dup objdesc {{
+    dup constant dup objdesc [[
     objtype!
     true en!
 ;
 
-: ;objdesc }} ;
+: ;objdesc ]] ;
 
 : (vector!) create dup , does> @ objtype sdata + ! ;
 : (vector) create dup , does> @ objtype sdata + @ execute ;
 : vector  (vector) (vector!) cell+ ;
 : ::  ( objdesc - <vector> )
-    objdesc {{ :noname ' >body @ objtype sdata + ! }} ;
+    objdesc [[ :noname ' >body @ objtype sdata + ! ]] ;
 
 
 ( TODO: actions )

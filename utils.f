@@ -22,3 +22,5 @@ ndcs: ( -- )
 previous
 
 synonym file-exists fileExist? 
+
+: 2s>f  swap s>f s>f ;

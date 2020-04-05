@@ -35,7 +35,7 @@ create testmap
 
 :while game update
     2x cls
-    plane1 {{ draw-as-tilemap }} 
+    plane1 [[ draw-as-tilemap ]] 
 ;
 
 plane1 as
