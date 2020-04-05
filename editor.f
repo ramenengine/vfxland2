@@ -40,12 +40,12 @@ true value info
     \ save tilemaps, tile attributes, and objects  (layer settings are defined in scenes.f)
     scn [[
         4 0 do i s.layer [[
-            s.zstm @ if s.zstm newfile[
+            l.zstm @ if l.zstm newfile[
                 s" STMP" write 
                 tm.cols sp@ 2 write drop
                 tm.rows sp@ 2 write drop
                 tm.base tm.cols cells tm.rows * write
-            ]file
+            ]file then
         ]] loop
     ]]
 ;
@@ -64,6 +64,14 @@ randomize
 : ed-bmp#  edplane 's tm.bmp# ;
 
 : 2+  rot + >r + r> ;
+
+\        fmouse >v zoom uv/ edplane 's scrollxy v+ v>
+\        >v tm.twh v/ vtrunc v>
+\        >v tm.twh v* v>
+\        >v scrollxy v- v>
+
+\        fmouse >v zoom uv/ edplane 's scrollxy v+
+\        tm.twh v/ vtrunc tm.twh v* scrollxy v- v>
 
 : maus  mouse zoom f>s / swap zoom f>s / swap edplane [[ tm.scrollx f>s tm.scrolly f>s ]] 2+ ;
 : colrow  fswap tm.tw f/ ftrunc fswap tm.th f/ ftrunc ;
@@ -125,9 +133,11 @@ randomize
     <h> press if tile# $01000000 xor to tile# then
     <v> press if tile# $02000000 xor to tile# then
     <i> press if info not to info then
+    <1> press if 0 to layer# then
+    <2> press if 1 to layer# then
+    <3> press if 2 to layer# then
+    <4> press if 3 to layer# then
 ;
-
-
 
 :while tiles update
     2x cls
@@ -138,13 +148,47 @@ randomize
     100000 0 do loop \ fsr fixes choppiness
 ;
 
+: tcols  edplane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
+: mouse-tile  edplane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
+
 :while tiles step
     ?refresh
     ms0 1 al_mouse_button_down if
-        edplane [[
-            mouse 2 / tm.th f>s / 8 lshift
-                swap 2 / tm.tw f>s /  or  to tile#
-        ]]
+        mouse-tile to tile#
+    then
+;
+
+:while attributes update
+    2x cls
+    0e 0e ed-bmp# bmp bmpwh swap s>f s>f
+        1e 0e 1e 1e al_draw_filled_rectangle
+    ed-bmp# 0= if exit then
+    ed-bmp# bmp 0e 0e 0 al_draw_bitmap
+    edplane [[
+        0
+        tm.bmp# bmp bmph 0 do
+            tm.bmp# bmp bmpw 0 do
+                dup tm.bmp# tileflags
+                if i s>f j s>f fover tm.tw f+ fover tm.th f+ 0e 1e 1e 0.1e al_draw_filled_rectangle then
+                1 +
+            tm.tw f>s +loop
+        tm.th f>s +loop
+        drop
+    ]]
+;
+
+: nand  invert and ;
+
+:while attributes step
+    ?refresh
+    ed-bmp# 0= if exit then
+    mouse 2 / ed-bmp# bmp bmph < swap 2 / ed-bmp# bmp bmpw < and if
+        ms0 1 al_mouse_button_down if
+            edplane [[ mouse-tile tm.bmp# 2dup tileflags 1 or -rot tileflags! ]]
+        then
+        ms0 2 al_mouse_button_down if
+            edplane [[ mouse-tile tm.bmp# 2dup tileflags 1 nand -rot tileflags! ]]
+        then
     then
 ;
 
@@ -159,7 +203,7 @@ include lib/gl1post
 
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8 ) \ "
-cr .( MAP    TILES  ATTRS                                 ) \ "
+cr .( MAP    TILES  ATTRS         RELOAD                  ) \ "
 cr .( Ctrl+S = Save everything ) \ "
 cr
 cr .( --== MAP ==-- ) \ "

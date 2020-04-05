@@ -9,11 +9,11 @@ synonym | locals|
 
 create zbuf  256 allot
 : z$   zcount zbuf zplace  zbuf ;
-: z+  >r zcount r@ zappend r> ;
+: z+   swap >r zcount r@ zappend r> ;
 : s>z  zbuf zplace  zbuf ;
 
 also system
-: Z+"  
+: +z"  
   [char] " parse >SyspadZ z+
 ;
 ndcs: ( -- )
@@ -24,3 +24,5 @@ previous
 synonym file-exists fileExist? 
 
 : 2s>f  swap s>f s>f ;
+
+synonym my me

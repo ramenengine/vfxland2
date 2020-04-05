@@ -7,6 +7,15 @@ require lib/a.f
 256 256 plane: lyr3 1 tm.bmp#! ;plane
 256 256 plane: lyr4 1 tm.bmp#! ;plane
 
+1024 cells constant /tileattrs 
+
+create tiledata /tileattrs lenof bitmap * /allot
+: tileattrs  ( n bmp# - a ) 1024 * + cells tiledata + ;
+\ keep the data struct abstracted away so we can add stuff (use other arrays)
+: tileflags  ( n bmp# - n ) tileattrs @ ;
+: tileflags! ( n n bmp# ) tileattrs ! ;
+
+
 4 cell array layer
     lyr1 0 layer !
     lyr2 1 layer !
@@ -72,19 +81,21 @@ lenof bitmap 4096 cells array tiledata  \ attribute data
 
 : ;scene ]] ;
 
-: iol-path  s.zname z$ z+" .iol" ;
+: iol-path  ( scene ) z" data/" z$ swap 's s.zname z+  +z" .iol" ;
+: tad-path  ( layer ) 's l.zbmp zcount 4 - s>z +z" .tad" ;
 
 : load  ( n )
     scene [[
-        4 0 do
-            i s.layer [[
-                l.zstm @ if
-                    l.zstm i lyr load-stm else i lyr clear-tilemap
+        4 0 do i s.layer [[            
+            l.zstm @ if
+                l.zstm i lyr load-stm
+                l.zbmp @ if 
+                    my tad-path ?exist if file[ 0 tm.bmp# tileattrs /tileattrs read ]file then
                 then
-            ]]
-        loop
-    \ iol-path load-iol
+            else i lyr clear-tilemap
+            then            
+        ]] loop
+        my iol-path ?exist if load-iol then
     ]]
 ;
 
- 
