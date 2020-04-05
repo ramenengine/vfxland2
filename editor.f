@@ -26,10 +26,10 @@ true value info
     scn [[
         4 0 do i s.layer [[ tm.bmp# l.zbmp load-bitmap ]] loop
     ]]
-    \ copy the layer from the scene into the engine, preserving base address and stride
-    edplane 's tm.base edplane 's tm.stride 
+    \ copy the layer from the scene into the engine, preserving some properties
+    edplane [[ tm.base tm.stride tm.cols tm.rows ]]
         scn-lyr edplane /tilemap move
-    edplane 's tm.stride! edplane 's tm.base!
+    edplane [[ tm.rows! tm.cols! tm.stride! tm.base! ]]
 ;
 
 : load-data
@@ -40,12 +40,21 @@ true value info
     \ save tilemaps, tile attributes, and objects  (layer settings are defined in scenes.f)
     scn [[
         4 0 do i s.layer [[
-            l.zstm @ if l.zstm newfile[
-                s" STMP" write 
-                tm.cols sp@ 2 write drop
-                tm.rows sp@ 2 write drop
-                tm.base tm.cols cells tm.rows * write
-            ]file then
+            l.zstm @ if
+                l.zstm newfile[
+                    s" STMP" write 
+                    i lyr [[
+                        tm.cols sp@ 2 write drop
+                        tm.rows sp@ 2 write drop
+                        tm.base tm.stride tm.rows * write
+                    ]]
+                ]file
+                l.zbmp @ if
+                    my tad-path newfile[
+                        0 tm.bmp# tileattrs /tileattrs write
+                    ]file
+                then
+            then
         ]] loop
     ]]
 ;
@@ -113,7 +122,6 @@ randomize
 ;
 
 :while map step
-    ?refresh
     ms0 1 al_mouse_button_down if
         <SPACE> held  if
             edplane [[
@@ -152,7 +160,6 @@ randomize
 : mouse-tile  edplane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
 
 :while tiles step
-    ?refresh
     ms0 1 al_mouse_button_down if
         mouse-tile to tile#
     then
@@ -180,7 +187,6 @@ randomize
 : nand  invert and ;
 
 :while attributes step
-    ?refresh
     ed-bmp# 0= if exit then
     mouse 2 / ed-bmp# bmp bmph < swap 2 / ed-bmp# bmp bmpw < and if
         ms0 1 al_mouse_button_down if
@@ -190,13 +196,15 @@ randomize
             edplane [[ mouse-tile tm.bmp# 2dup tileflags 1 nand -rot tileflags! ]]
         then
     then
-;
+; 
 
 : system
+    ?refresh
     <f1> press if map then
     <f2> press if tiles then
     <f3> press if attributes then
-    <f5> press if s" scenes.f" included then
+    <f5> press if s" scenes.f" included load-data then
+    <s> press ctrl? and if save then
 ;
 
 include lib/gl1post

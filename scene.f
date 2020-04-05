@@ -26,8 +26,8 @@ create tiledata /tileattrs lenof bitmap * /allot
 
 \ internal layer struct
 /TILEMAP
-    64 zgetset l.zstm l.zstm!
-    64 zgetset l.zbmp l.zbmp!
+    64 zgetset l.zstm l.zstm!  \ tilemap path
+    64 zgetset l.zbmp l.zbmp!  \ tile bitmap path
     fgetset l.parax l.parax!
     fgetset l.paray l.paray!
 constant /LAYER
