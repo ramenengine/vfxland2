@@ -24,12 +24,11 @@ true value info
     
     \ load tileset(s)
     scn [[
-        4 0 do i s.layer [[ tm.bmp# l.zbmp load-bitmap ]] loop
+        4 0 do i s.layer [[ l.bmp# l.zbmp load-bitmap ]] loop
     ]]
-    \ copy the layer from the scene into the engine, preserving some properties
-    edplane [[ tm.base tm.stride tm.cols tm.rows ]]
-        scn-lyr edplane /tilemap move
-    edplane [[ tm.rows! tm.cols! tm.stride! tm.base! ]]
+    \ copy the layer properties from the scene layer to the engine layer
+    scn-lyr   [[ l.tw l.th l.scrollx l.scrolly l.bmp# ]]
+    edplane   [[ tm.bmp#! tm.scrolly! tm.scrollx! tm.th! tm.tw! ]]
 ;
 
 : load-data
@@ -51,7 +50,7 @@ true value info
                 ]file
                 l.zbmp @ if
                     my tad-path newfile[
-                        0 tm.bmp# tileattrs /tileattrs write
+                        0 l.bmp# tileattrs /tileattrs write
                     ]file
                 then
             then

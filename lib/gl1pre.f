@@ -306,16 +306,16 @@ matrix m
 ( -1 or $FFFFFFFF means transparent, i.e. a blank space )
 
 /OBJECT
-    fgetset tm.w tm.w!
+    fgetset tm.w tm.w!              \ display box in pixels 
     fgetset tm.h tm.h!
-    getset tm.rows tm.rows!
+    getset tm.rows tm.rows!         \ total rows and cols in tiles
     getset tm.cols tm.cols!
-    getset tm.bmp# tm.bmp#!       \ index
-    getset tm.stride tm.stride!
-    getset tm.base tm.base!     \ address
-    fgetset tm.tw tm.tw!
+    getset tm.bmp# tm.bmp#!         \ bitmap index
+    getset tm.stride tm.stride!     \ row stride in bytes
+    getset tm.base tm.base!         \ address
+    fgetset tm.tw tm.tw!            \ tile size
     fgetset tm.th tm.th!
-    fgetset tm.scrollx tm.scrollx!
+    fgetset tm.scrollx tm.scrollx!  \ scroll coords in pixels
     fgetset tm.scrolly tm.scrolly!
 constant /TILEMAP
 

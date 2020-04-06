@@ -25,11 +25,16 @@ create tiledata /tileattrs lenof bitmap * /allot
 : lyr  layer @ ;
 
 \ internal layer struct
-/TILEMAP
-    64 zgetset l.zstm l.zstm!  \ tilemap path
-    64 zgetset l.zbmp l.zbmp!  \ tile bitmap path
+0
+    64 zgetset l.zstm l.zstm!       \ tilemap path
+    64 zgetset l.zbmp l.zbmp!       \ tile bitmap path
     fgetset l.parax l.parax!
     fgetset l.paray l.paray!
+    fgetset l.tw l.tw!              \ tile size
+    fgetset l.th l.th!
+    fgetset l.scrollx l.scrollx!    \ initial scroll coords in pixels
+    fgetset l.scrolly l.scrolly!
+    getset l.bmp# l.bmp#!
 constant /LAYER
 
 \ internal scene struct
@@ -43,6 +48,8 @@ constant /SCENE
 /scene 200 array scene
 lenof bitmap 4096 cells array tiledata  \ attribute data
 
+: init-layer  16e fdup l.th! l.tw! 1e fdup l.paray! l.parax!
+    0e fdup l.scrolly! l.scrollx! ;
 
 : ?exist
     dup zcount file-exists not if cr zcount type ."  not found" 0 else 1 then
@@ -76,7 +83,7 @@ lenof bitmap 4096 cells array tiledata  \ attribute data
     >in @ >r
     dup constant scene [[
     r> >in ! bl parse s>z s.zname!
-    4 0 do i s.layer [[ init-tilemap ]] loop
+    4 0 do i s.layer [[ init-layer ]] loop
 ;
 
 : ;scene ]] ;
@@ -90,7 +97,7 @@ lenof bitmap 4096 cells array tiledata  \ attribute data
             l.zstm @ if
                 l.zstm i lyr load-stm
                 l.zbmp @ if 
-                    my tad-path ?exist if file[ 0 tm.bmp# tileattrs /tileattrs read ]file then
+                    my tad-path ?exist if file[ 0 l.bmp# tileattrs /tileattrs read ]file then
                 then
             else i lyr clear-tilemap
             then            
