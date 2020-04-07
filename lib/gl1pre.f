@@ -55,7 +55,6 @@ create alevt 256 allot&erase
     screen-hook pump      
     screen-hook step
     screen-hook resume
-    screen-hook object
 constant /screen
 
 : screen  create /screen allot&erase
@@ -117,6 +116,8 @@ constant /screen
     queue  display       al_get_display_event_source  al_register_event_source
     queue                al_get_mouse_event_source    al_register_event_source
     al_create_builtin_font to bif
+
+    ALLEGRO_ADD ALLEGRO_ALPHA ALLEGRO_INVERSE_ALPHA al_set_blender
 ;
 
 ( -------------------------------------------------------------- )
@@ -199,9 +200,8 @@ constant /OBJECT
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
 : init-object  0e 0e xy!  1 en! ;
 
-max-objects /objslot array (object)
+max-objects /objslot array object
 screen game game
-:while game object (object) ;
 0 object to me
 
 : btn  kbs0 swap al_key_down ;

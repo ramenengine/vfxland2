@@ -1,8 +1,7 @@
 : held   kbs0 swap al_key_down ;
-: letgo  held not ;
 : kdelta dup held kbs1 rot al_key_down - ;
-: press   kdelta 1 = ;
-: rel     kdelta -1 = ;
+: pressed   kdelta 1 = ;
+: letgo     kdelta -1 = ;
 : shift? 215 held 216 held or ;
 : ctrl? 217 held 218 held or ;
 : alt?  219 held 220 held or ;

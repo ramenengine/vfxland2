@@ -2686,7 +2686,7 @@ extern "C" void al_draw_multiline_text( void *font,
 \ extern "C" al_draw_polygon( );
 \ extern "C" al_draw_polyline( );
 \ extern "C" al_draw_prim( );
-\ extern "C" al_draw_rectangle( );
+\ extern "C" void al_draw_rectangle( float x1, float y1, float x2, float y2, float r, float g, float b, float a, float thickness );
 \ extern "C" al_draw_ribbon( );
 \ extern "C" al_draw_rotated_bitmap( );
 \ extern "C" al_draw_rounded_rectangle( );
@@ -3199,7 +3199,7 @@ extern "C" void al_scale_transform( void * m, float sx, float sy );
 extern "C" int al_set_audio_stream_playmode( void * stream, int mode );
 \ extern "C" al_set_audio_stream_speed( );
 \ extern "C" al_set_blend_color( );
-\ extern "C" al_set_blender( );
+extern "C" void al_set_blender( int op, int src, int dst );
 \ extern "C" al_set_clipboard_text( );
 extern "C" void al_set_clipping_rectangle( int x, int y, int width, int height );
 \ extern "C" al_set_config_value( );
@@ -3675,45 +3675,51 @@ extern "C" void al_use_transform( void * m );
 1 1 lshift constant ALLEGRO_FULLSCREEN
 1 9 lshift constant ALLEGRO_FULLSCREEN_WINDOW
 
-: enum dup constant 1 + ;
+enum ALLEGRO_DISPLAY_OPTIONS {
+   ALLEGRO_RED_SIZE = 0,
+   ALLEGRO_GREEN_SIZE = 1,
+   ALLEGRO_BLUE_SIZE = 2,
+   ALLEGRO_ALPHA_SIZE = 3,
+   ALLEGRO_RED_SHIFT = 4,
+   ALLEGRO_GREEN_SHIFT = 5,
+   ALLEGRO_BLUE_SHIFT = 6,
+   ALLEGRO_ALPHA_SHIFT = 7,
+   ALLEGRO_ACC_RED_SIZE = 8,
+   ALLEGRO_ACC_GREEN_SIZE = 9,
+   ALLEGRO_ACC_BLUE_SIZE = 10,
+   ALLEGRO_ACC_ALPHA_SIZE = 11,
+   ALLEGRO_STEREO = 12,
+   ALLEGRO_AUX_BUFFERS = 13,
+   ALLEGRO_COLOR_SIZE = 14,
+   ALLEGRO_DEPTH_SIZE = 15,
+   ALLEGRO_STENCIL_SIZE = 16,
+   ALLEGRO_SAMPLE_BUFFERS = 17,
+   ALLEGRO_SAMPLES = 18,
+   ALLEGRO_RENDER_METHOD = 19,
+   ALLEGRO_FLOAT_COLOR = 20,
+   ALLEGRO_FLOAT_DEPTH = 21,
+   ALLEGRO_SINGLE_BUFFER = 22,
+   ALLEGRO_SWAP_METHOD = 23,
+   ALLEGRO_COMPATIBLE_DISPLAY = 24,
+   ALLEGRO_UPDATE_DISPLAY_REGION = 25,
+   ALLEGRO_VSYNC = 26,
+   ALLEGRO_MAX_BITMAP_SIZE = 27,
+   ALLEGRO_SUPPORT_NPOT_BITMAP = 28,
+   ALLEGRO_CAN_DRAW_INTO_BITMAP = 29,
+   ALLEGRO_SUPPORT_SEPARATE_ALPHA = 30,
+   ALLEGRO_AUTO_CONVERT_BITMAPS = 31,
+   ALLEGRO_SUPPORTED_ORIENTATIONS = 32,
+   ALLEGRO_OPENGL_MAJOR_VERSION = 33,
+   ALLEGRO_OPENGL_MINOR_VERSION = 34,
+   ALLEGRO_DISPLAY_OPTIONS_COUNT
+};
 
-0
-enum  ALLEGRO_RED_SIZE \ 0,
-enum  ALLEGRO_GREEN_SIZE \ 1,
-enum  ALLEGRO_BLUE_SIZE \ 2,
-enum  ALLEGRO_ALPHA_SIZE \ 3,
-enum  ALLEGRO_RED_SHIFT \ 4,
-enum  ALLEGRO_GREEN_SHIFT \ 5,
-enum  ALLEGRO_BLUE_SHIFT \ 6,
-enum  ALLEGRO_ALPHA_SHIFT \ 7,
-enum  ALLEGRO_ACC_RED_SIZE \ 8,
-enum  ALLEGRO_ACC_GREEN_SIZE \ 9,
-enum  ALLEGRO_ACC_BLUE_SIZE \ 10,
-enum  ALLEGRO_ACC_ALPHA_SIZE \ 11,
-enum  ALLEGRO_STEREO \ 12,
-enum  ALLEGRO_AUX_BUFFERS \ 13,
-enum  ALLEGRO_COLOR_SIZE \ 14,
-enum  ALLEGRO_DEPTH_SIZE \ 15,
-enum  ALLEGRO_STENCIL_SIZE \ 16,
-enum  ALLEGRO_SAMPLE_BUFFERS \ 17,
-enum  ALLEGRO_SAMPLES \ 18,
-enum  ALLEGRO_RENDER_METHOD \ 19,
-enum  ALLEGRO_FLOAT_COLOR \ 20,
-enum  ALLEGRO_FLOAT_DEPTH \ 21,
-enum  ALLEGRO_SINGLE_BUFFER \ 22,
-enum  ALLEGRO_SWAP_METHOD \ 23,
-enum  ALLEGRO_COMPATIBLE_DISPLAY \ 24,
-enum  ALLEGRO_UPDATE_DISPLAY_REGION \ 25,
-enum  ALLEGRO_VSYNC \ 26,
-enum  ALLEGRO_MAX_BITMAP_SIZE \ 27,
-enum  ALLEGRO_SUPPORT_NPOT_BITMAP \ 28,
-enum  ALLEGRO_CAN_DRAW_INTO_BITMAP \ 29,
-enum  ALLEGRO_SUPPORT_SEPARATE_ALPHA \ 30,
-enum  ALLEGRO_AUTO_CONVERT_BITMAPS \ 31,
-enum  ALLEGRO_SUPPORTED_ORIENTATIONS \ 32,
-enum  ALLEGRO_OPENGL_MAJOR_VERSION \ 33,
-enum  ALLEGRO_OPENGL_MINOR_VERSION \ 34,
-drop
+enum
+{
+   ALLEGRO_DONTCARE,
+   ALLEGRO_REQUIRE,
+   ALLEGRO_SUGGEST
+};
 
 
 $00 constant ALLEGRO_AUDIO_DEPTH_INT8      
@@ -3833,7 +3839,30 @@ struct /ALLEGRO_MOUSE_STATE
     field: ALLEGRO_MOUSE_STATE.display
 end-struct
 
+
 0 constant ALLEGRO_ALIGN_LEFT
 1 constant ALLEGRO_ALIGN_CENTER
 2 constant ALLEGRO_ALIGN_RIGHT
 4 constant ALLEGRO_ALIGN_INTEGER
+
+enum ALLEGRO_BLEND_MODE {
+   ALLEGRO_ZERO                = 0,
+   ALLEGRO_ONE                 = 1,
+   ALLEGRO_ALPHA               = 2,
+   ALLEGRO_INVERSE_ALPHA       = 3,
+   ALLEGRO_SRC_COLOR           = 4,
+   ALLEGRO_DEST_COLOR          = 5,
+   ALLEGRO_INVERSE_SRC_COLOR   = 6,
+   ALLEGRO_INVERSE_DEST_COLOR  = 7,
+   ALLEGRO_CONST_COLOR         = 8,
+   ALLEGRO_INVERSE_CONST_COLOR = 9,
+   ALLEGRO_NUM_BLEND_MODES
+};
+
+enum ALLEGRO_BLEND_OPERATIONS {
+   ALLEGRO_ADD                = 0,
+   ALLEGRO_SRC_MINUS_DEST     = 1,
+   ALLEGRO_DEST_MINUS_SRC     = 2,
+   ALLEGRO_NUM_BLEND_OPERATIONS
+};
+

@@ -5,12 +5,22 @@ require input.f
 require lib/strout.f
 require lib/a.f
 require scene.f
-include scenes
+require script.f
 
 0 value tile#
 true value info
 0 value scene#
 0 value layer#
+true value snapping
+0 value selected  \ object
+0 value hovered   \ object
+0 value counter
+
+screen map
+screen tiles
+screen attributes
+screen objed
+screen objsel
 
 : scn  scene# scene ;
 : scn-lyr  scene# scene [[ layer# s.layer ]] ;
@@ -32,12 +42,16 @@ true value info
 ;
 
 : load-data
+    s" data.f" included
+    s" scenes.f" included
+    s" scripts.f" included
     scene# load
 ;
 
 : save  ( - )
     \ save tilemaps, tile attributes, and objects  (layer settings are defined in scenes.f)
     scn [[
+        my iol-path save-iol
         4 0 do i s.layer [[
             l.zstm @ if
                 l.zstm newfile[
@@ -57,10 +71,6 @@ true value info
         ]] loop
     ]]
 ;
-
-screen map
-screen tiles
-screen attributes
 
 : randomize
     data a!
@@ -136,14 +146,14 @@ randomize
         maus th / ed-stride * swap tw / cells + data + @ to tile#
     then
     ms0 3 al_mouse_button_down if then
-    <e> press if -1 to tile# then
-    <h> press if tile# $01000000 xor to tile# then
-    <v> press if tile# $02000000 xor to tile# then
-    <i> press if info not to info then
-    <1> press if 0 to layer# then
-    <2> press if 1 to layer# then
-    <3> press if 2 to layer# then
-    <4> press if 3 to layer# then
+    <e> pressed if -1 to tile# then
+    <h> pressed if tile# $01000000 xor to tile# then
+    <v> pressed if tile# $02000000 xor to tile# then
+    <i> pressed if info not to info then
+    <1> pressed if 0 to layer# then
+    <2> pressed if 1 to layer# then
+    <3> pressed if 2 to layer# then
+    <4> pressed if 3 to layer# then
 ;
 
 :while tiles update
@@ -175,7 +185,7 @@ randomize
         tm.bmp# bmp bmph 0 do
             tm.bmp# bmp bmpw 0 do
                 dup tm.bmp# tileflags
-                if i s>f j s>f fover tm.tw f+ fover tm.th f+ 0e 1e 1e 0.1e al_draw_filled_rectangle then
+                if i s>f j s>f fover tm.tw f+ fover tm.th f+ 0e 1e 1e 0.5e al_draw_filled_rectangle then
                 1 +
             tm.tw f>s +loop
         tm.th f>s +loop
@@ -195,22 +205,65 @@ randomize
             edplane [[ mouse-tile tm.bmp# 2dup tileflags 1 nand -rot tileflags! ]]
         then
     then
-; 
+;
+
+: hue  1e frnd 1e frnd 1e frnd ;
+
+:while objed update
+    2x cls
+    lyr1 [[ draw-as-tilemap ]]
+    lyr2 [[ draw-as-tilemap ]]
+    1 RandSeed !
+    max-objects 0 do
+        i object [[ en if
+            x y iw s>f x f+ ih s>f y f+ hue
+                selected me = if counter 16 and if 1e else 0.5e then else 0.5e then
+                al_draw_filled_rectangle
+        then ]]
+    loop
+    draw-sprites
+;
+
+:while objed step
+    maus | my mx |
+    <s> pressed ctrl? not and if snapping not to snapping then
+
+    ms0 1 al_mouse_button_down selected 0<> and
+        selected hovered = and if
+        selected [[ walt s>f 2e f/ y f+ y! s>f 2e f/ x f+ x! ]]
+    then
+
+    0 to hovered
+    max-objects 0 do
+        i object [[ en if
+            mx x f>s >= my y f>s >= and
+            mx x f>s iw + <= and my y f>s ih + <= and if
+                me to hovered
+                ms0 1 al_mouse_button_down if
+                    me to selected
+                then
+            then
+        then ]]
+    loop
+;    
 
 : system
     ?refresh
-    <f1> press if map then
-    <f2> press if tiles then
-    <f3> press if attributes then
-    <f5> press if s" scenes.f" included load-data then
-    <s> press ctrl? and if save then
+    <f1> pressed if map then
+    <f2> pressed if tiles then
+    <f3> pressed if attributes then
+    <f5> pressed if load-data then
+    <f11> pressed if objed then
+    <f12> pressed if objsel then
+    <s> pressed ctrl? and if save then
+    1 +to counter
 ;
 
 include lib/gl1post
 
 cr
-cr .( F1     F2     F3     F4     F5     F6     F7     F8 ) \ "
-cr .( MAP    TILES  ATTRS         RELOAD                  ) \ "
+cr .( F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    ) \ "
+cr .( MAP    TILES  ATTRS         RELOAD                                   OBJED  OBJSEL ) \ "
 cr .( Ctrl+S = Save everything ) \ "
 cr
 cr .( --== MAP ==-- ) \ "

@@ -46,7 +46,7 @@ constant /LAYER
 constant /SCENE
 
 /scene 200 array scene
-lenof bitmap 4096 cells array tiledata  \ attribute data
+32 4096 cells array tiledata  \ attribute data
 
 : init-layer  16e fdup l.th! l.tw! 1e fdup l.paray! l.parax!
     0e fdup l.scrolly! l.scrollx! ;
@@ -72,7 +72,7 @@ lenof bitmap 4096 cells array tiledata  \ attribute data
 
 : save-iol ( zstr -- )
     newfile[
-        0 object [ lenof object ]# /objslot * write
+        0 object  [ lenof object /objslot * ]#  write
     ]file 
 ;
 
@@ -105,4 +105,3 @@ lenof bitmap 4096 cells array tiledata  \ attribute data
         my iol-path ?exist if load-iol then
     ]]
 ;
-

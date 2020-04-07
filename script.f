@@ -46,5 +46,3 @@ value /sdata
     false to warnings?
     >in @ ' >body @ swap >in ! bl parse GetPathSpec included
     true to warnings? ;
-
-0 script lemming

@@ -6,8 +6,6 @@
 : repos  ( n - ) 0 file1 reposition-file abort" Reposition file error" ;
 : read  ( adr bytes - ) file1 read-file abort" Read file error" drop ;
 : write ( adr bytes - ) file1 write-file abort" Write file error" ;
-: newfile[  ( size zstr - )
-    dup zcount fileExist? if
-        zcount cr 2dup type w/o create-file abort" Create file error" to file1 
-    else file[ 0 file1 resize-file abort" Resize file error" then ;
+: newfile[  ( zstr - )
+    zcount cr 2dup type w/o create-file abort" Create file error" to file1 ;
         
