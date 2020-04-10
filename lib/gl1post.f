@@ -17,7 +17,7 @@
         ms0 ms1 /ALLEGRO_MOUSE_STATE move
         ms0 al_get_mouse_state
         [ dev ] [if] system [then]
-        begin queue alevt al_get_next_event while pump repeat
+        \ begin queue alevt al_get_next_event while pump repeat
         me >r step r> to me
     kbs0 59 al_key_down until
     [ fullscreen ] [if] shutdown bye [then]

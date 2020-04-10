@@ -15,6 +15,7 @@ true value snapping
 0 value selected  \ object
 0 value hovered   \ object
 0 value counter
+0 value dragging  \ bool
 
 screen map
 screen tiles
@@ -228,23 +229,36 @@ randomize
     maus | my mx |
     <s> pressed ctrl? not and if snapping not to snapping then
 
-    ms0 1 al_mouse_button_down selected 0<> and
-        selected hovered = and if
-        selected [[ walt s>f 2e f/ y f+ y! s>f 2e f/ x f+ x! ]]
+    dragging if
+        ms0 1 al_mouse_button_down selected 0<> and
+            selected hovered = and if
+            selected [[ walt s>f 2e f/ y f+ y! s>f 2e f/ x f+ x! ]]
+        then
+        ms0 1 al_mouse_button_down 0= if
+            false to dragging
+            snapping if
+                selected 's x edplane 's tm.tw 2e f/ f/ fround edplane 's tm.tw 2e f/ f* selected 's x!
+                selected 's y edplane 's tm.th 2e f/ f/ fround edplane 's tm.th 2e f/ f* selected 's y!
+            then
+        then
+        
+    else
+        0 to hovered
+        max-objects 0 do
+            i object [[ en if
+                mx x f>s >= my y f>s >= and
+                mx x f>s iw + <= and my y f>s ih + <= and if
+                    me to hovered
+                    ms0 1 al_mouse_button_down if
+                        me to selected
+                        true to dragging
+                    then
+                then
+            then ]]
+        loop
+    
     then
 
-    0 to hovered
-    max-objects 0 do
-        i object [[ en if
-            mx x f>s >= my y f>s >= and
-            mx x f>s iw + <= and my y f>s ih + <= and if
-                me to hovered
-                ms0 1 al_mouse_button_down if
-                    me to selected
-                then
-            then
-        then ]]
-    loop
 ;    
 
 : system
