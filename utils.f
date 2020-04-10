@@ -26,3 +26,5 @@ synonym file-exists fileExist?
 : 2s>f  swap s>f s>f ;
 
 synonym my me
+
+: 2-  rot swap - >r - r> ;

@@ -34,12 +34,17 @@ create kbs0 /ALLEGRO_KEYBOARD_STATE allot&erase
 create kbs1 /ALLEGRO_KEYBOARD_STATE allot&erase
 create ms0 /ALLEGRO_MOUSE_STATE allot&erase
 create ms1 /ALLEGRO_MOUSE_STATE allot&erase
+create ms2 /ALLEGRO_MOUSE_STATE allot&erase
 0 value mixer
 0 value voice
 create mi /ALLEGRO_MONITOR_INFO allot&erase
 0 value queue
 create alevt 256 allot&erase
 0 value bif  \ builtin font
+0 value mousex
+0 value mousey
+0 value mwheelx
+0 value mwheely
 
 : load-data ;
 : init-game ;
@@ -49,13 +54,15 @@ create alevt 256 allot&erase
 
 : execute  ?dup if execute then ;
 : screen-hook  create dup , cell+ does> @ scr + @ execute ;
+: does-screen-get  does> @ scr + @ ;
+: screen-getset   create dup , does-screen-get create dup , cell+ does> @ scr + ! ;
 
 0
     screen-hook update    
     screen-hook pump      
     screen-hook step
     screen-hook resume
-constant /screen
+value /screen
 
 : screen  create /screen allot&erase
     does>
@@ -128,8 +135,14 @@ constant /screen
 
 \ --------------------------------------------------------------
 
+variable bud
+
+
+: sfrand randseed @  3141592621 *  1+  DUP randseed ! ;
+  also system  assign sfrand to-do RANDOM  previous
+
 synonym rnd choose
-: frnd  1000e f* f>s choose s>f 1000e f/ ;
+: frnd  65535e f* f>s choose s>f 65535e f/ ;
 : ]#  ] postpone literal ;
 synonym | locals| immediate
 synonym /allot allot&erase

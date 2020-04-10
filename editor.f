@@ -6,6 +6,7 @@ require lib/strout.f
 require lib/a.f
 require scene.f
 require script.f
+require utils.f
 
 0 value tile#
 true value info
@@ -17,29 +18,34 @@ true value snapping
 0 value counter
 0 value dragging  \ bool
 
+/screen
+    screen-getset scrollx scrollx!
+    screen-getset scrolly scrolly!
+to /screen
+
 screen map
 screen tiles
 screen attributes
 screen objed
 screen objsel
 
-: scn  scene# scene ;
-: scn-lyr  scene# scene [[ layer# s.layer ]] ;
-: edplane  layer# lyr ;
-: data  edplane 's tm.base ;
-: ed-stride  edplane 's tm.stride ;
+: the-scene  scene# scene ;
+: the-layer  scene# scene [[ layer# s.layer ]] ;
+: the-plane  layer# bgp ;
+: the-base   the-plane 's tm.base ;
+: the-stride the-plane 's tm.stride ;
 
 : load  ( scene# )
     dup to scene#
     load  \ load tilemaps, tile attributes, layer settings, and objects from given scene
     
     \ load tileset(s)
-    scn [[
+    the-scene [[
         4 0 do i s.layer [[ l.bmp# l.zbmp load-bitmap ]] loop
     ]]
     \ copy the layer properties from the scene layer to the engine layer
-    scn-lyr   [[ l.tw l.th l.scrollx l.scrolly l.bmp# ]]
-    edplane   [[ tm.bmp#! tm.scrolly! tm.scrollx! tm.th! tm.tw! ]]
+    the-layer   [[ l.tw l.th l.bmp# ]]
+    the-plane   [[ tm.bmp#! tm.th! tm.tw! ]]
 ;
 
 : load-data
@@ -51,13 +57,13 @@ screen objsel
 
 : save  ( - )
     \ save tilemaps, tile attributes, and objects  (layer settings are defined in scenes.f)
-    scn [[
+    the-scene [[
         my iol-path save-iol
         4 0 do i s.layer [[
             l.zstm @ if
                 l.zstm newfile[
                     s" STMP" write 
-                    i lyr [[
+                    i bgp [[
                         tm.cols sp@ 2 write drop
                         tm.rows sp@ 2 write drop
                         tm.base tm.stride tm.rows * write
@@ -74,77 +80,77 @@ screen objsel
 ;
 
 : randomize
-    data a!
+    the-base a!
     256 256 * 0 do 8 rnd 4 rnd pack-tile !+ loop
 ;
 randomize
 
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
-: ed-bmp#  edplane 's tm.bmp# ;
+: ed-bmp#  the-plane 's tm.bmp# ;
 
 : 2+  rot + >r + r> ;
 
-\        fmouse >v zoom uv/ edplane 's scrollxy v+ v>
+\        fmouse >v zoom uv/ the-plane 's scrollxy v+ v>
 \        >v tm.twh v/ vtrunc v>
 \        >v tm.twh v* v>
 \        >v scrollxy v- v>
 
-\        fmouse >v zoom uv/ edplane 's scrollxy v+
+\        fmouse >v zoom uv/ the-plane 's scrollxy v+
 \        tm.twh v/ vtrunc tm.twh v* scrollxy v- v>
 
-: maus  mouse zoom f>s / swap zoom f>s / swap edplane [[ tm.scrollx f>s tm.scrolly f>s ]] 2+ ;
+: maus  mouse zoom f>s / swap zoom f>s / swap scrollx scrolly 2+ ;
 : colrow  fswap tm.tw f/ ftrunc fswap tm.th f/ ftrunc ;
 : tilexy  fswap tm.tw f* fswap tm.th f* ;
-: scroll-  fswap tm.scrollx f- fswap tm.scrolly f- ;
+: scroll-  fswap scrollx s>f f- fswap scrolly s>f f- ;
 
 : draw-cursor
-    edplane [[ 
-    tile#  edplane
+    the-plane [[ 
+    tile#  the-plane
         maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
 ]] ;
 
-: scroll$  zstr[ edplane [[ tm.scrollx f>s . tm.scrolly f>s . ]] ]zstr ;
+: scroll$  zstr[ scrollx . scrolly . ]zstr ;
+
+: tw  the-plane [[ tm.tw ]] f>s ;
+: th  the-plane [[ tm.th ]] f>s ;
+
+: ?refresh
+    ed-bmp# zbmp-file mtime@ ed-bmp# bmp-mtime @ > if 50 ms load-data then
+;
+
+: pan
+    the-plane [[
+        walt scrolly swap - 0 max scrolly!
+             scrollx swap - 0 max scrollx!
+    ]]
+;
+
+: draw-plane     [[ scrollx s>f tm.scrollx! s>f scrolly tm.scrolly! draw-as-tilemap ]] ;
+: draw-parallax >r 
+    r@ bgp [[ scrollx s>f tm.scrollx! scrolly s>f tm.scrolly! draw-as-tilemap ]]
+r> drop ;
 
 :while map update
     2x
     0.5e 0.5e 0.5e 1e al_clear_to_color
-    edplane [[ draw-as-tilemap ]]
+    the-plane draw-plane 
     draw-cursor
     info if 
         bif 1e 1e 1e 1e 0e viewh 8 - s>f 0 scroll$ al_draw_text
     then
 ;
 
-:while map pump
-    etype ALLEGRO_EVENT_MOUSE_BUTTON_DOWN = if
-\        cr
-\        alevt MOUSE_EVENT.x ?
-\        alevt MOUSE_EVENT.y ?
-\        alevt MOUSE_EVENT.button ?
-    then
-;
-
-: tw  edplane [[ tm.tw ]] f>s ;
-: th  edplane [[ tm.th ]] f>s ;
-
-: ?refresh
-    ed-bmp# zbmp-file mtime@ ed-bmp# bmp-mtime @ > if 50 ms load-data then
-;
-
 :while map step
     ms0 1 al_mouse_button_down if
         <SPACE> held  if
-            edplane [[
-                walt tm.scrolly s>f f- 0e fmax tm.scrolly!
-                    tm.scrollx s>f f- 0e fmax tm.scrollx!
-            ]]
+            pan
         else
             tile#
-                maus th / ed-stride * swap tw / cells + data + !
+                maus th / the-stride * swap tw / cells + the-base + !
         then 
     then
     ms0 2 al_mouse_button_down if
-        maus th / ed-stride * swap tw / cells + data + @ to tile#
+        maus th / the-stride * swap tw / cells + the-base + @ to tile#
     then
     ms0 3 al_mouse_button_down if then
     <e> pressed if -1 to tile# then
@@ -166,8 +172,8 @@ randomize
     100000 0 do loop \ fsr fixes choppiness
 ;
 
-: tcols  edplane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
-: mouse-tile  edplane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
+: tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
+: mouse-tile  the-plane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
 
 :while tiles step
     ms0 1 al_mouse_button_down if
@@ -181,7 +187,7 @@ randomize
         1e 0e 1e 1e al_draw_filled_rectangle
     ed-bmp# 0= if exit then
     ed-bmp# bmp 0e 0e 0 al_draw_bitmap
-    edplane [[
+    the-plane [[
         0
         tm.bmp# bmp bmph 0 do
             tm.bmp# bmp bmpw 0 do
@@ -200,10 +206,10 @@ randomize
     ed-bmp# 0= if exit then
     mouse 2 / ed-bmp# bmp bmph < swap 2 / ed-bmp# bmp bmpw < and if
         ms0 1 al_mouse_button_down if
-            edplane [[ mouse-tile tm.bmp# 2dup tileflags 1 or -rot tileflags! ]]
+            the-plane [[ mouse-tile tm.bmp# 2dup tileflags 1 or -rot tileflags! ]]
         then
         ms0 2 al_mouse_button_down if
-            edplane [[ mouse-tile tm.bmp# 2dup tileflags 1 nand -rot tileflags! ]]
+            the-plane [[ mouse-tile tm.bmp# 2dup tileflags 1 nand -rot tileflags! ]]
         then
     then
 ;
@@ -212,9 +218,11 @@ randomize
 
 :while objed update
     2x cls
-    lyr1 [[ draw-as-tilemap ]]
-    lyr2 [[ draw-as-tilemap ]]
+    0 draw-parallax
+    1 draw-parallax
     1 RandSeed !
+    m scrollx negate s>f zoom f* scrolly negate s>f zoom f* al_translate_transform
+    m al_use_transform
     max-objects 0 do
         i object [[ en if
             x y iw s>f x f+ ih s>f y f+ hue
@@ -226,9 +234,14 @@ randomize
 ;
 
 :while objed step
+    cr walt swap . .
     maus | my mx |
     <s> pressed ctrl? not and if snapping not to snapping then
 
+    <SPACE> held ms0 1 al_mouse_button_down and if
+        pan exit
+    then
+        
     dragging if
         ms0 1 al_mouse_button_down selected 0<> and
             selected hovered = and if
@@ -237,11 +250,10 @@ randomize
         ms0 1 al_mouse_button_down 0= if
             false to dragging
             snapping if
-                selected 's x edplane 's tm.tw 2e f/ f/ fround edplane 's tm.tw 2e f/ f* selected 's x!
-                selected 's y edplane 's tm.th 2e f/ f/ fround edplane 's tm.th 2e f/ f* selected 's y!
+                selected 's x the-plane 's tm.tw 2e f/ f/ fround the-plane 's tm.tw 2e f/ f* selected 's x!
+                selected 's y the-plane 's tm.th 2e f/ f/ fround the-plane 's tm.th 2e f/ f* selected 's y!
             then
         then
-        
     else
         0 to hovered
         max-objects 0 do
@@ -265,10 +277,10 @@ randomize
     ?refresh
     <f1> pressed if map then
     <f2> pressed if tiles then
-    <f3> pressed if attributes then
+    <f3> pressed if objed then
+    <f4> pressed if objsel then
     <f5> pressed if load-data then
-    <f11> pressed if objed then
-    <f12> pressed if objsel then
+    <f8> pressed if attributes then
     <s> pressed ctrl? and if save then
     1 +to counter
 ;
@@ -277,7 +289,7 @@ include lib/gl1post
 
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    ) \ "
-cr .( MAP    TILES  ATTRS         RELOAD                                   OBJED  OBJSEL ) \ "
+cr .( MAP    TILES  OBJED  OBJSEL RELOAD                      ATTR                       ) \ "
 cr .( Ctrl+S = Save everything ) \ "
 cr
 cr .( --== MAP ==-- ) \ "

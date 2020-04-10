@@ -2,10 +2,12 @@ require lib/filelib.f
 require utils.f
 require lib/a.f
 
-256 256 plane: lyr1 1 tm.bmp#! ;plane
-256 256 plane: lyr2 1 tm.bmp#! ;plane
-256 256 plane: lyr3 1 tm.bmp#! ;plane
-256 256 plane: lyr4 1 tm.bmp#! ;plane
+256 256 plane: bgp1 1 tm.bmp#! ;plane
+256 256 plane: bgp2 1 tm.bmp#! ;plane
+256 256 plane: bgp3 1 tm.bmp#! ;plane
+256 256 plane: bgp4 1 tm.bmp#! ;plane
+create bgplanes bgp1 , bgp2 , bgp3 , bgp4 ,
+: bgp  cells bgplanes + @ ;
 
 1024 cells constant /tileattrs 
 
@@ -14,15 +16,6 @@ create tiledata /tileattrs lenof bitmap * /allot
 \ keep the data struct abstracted away so we can add stuff (use other arrays)
 : tileflags  ( n bmp# - n ) tileattrs @ ;
 : tileflags! ( n n bmp# ) tileattrs ! ;
-
-
-4 cell array layer
-    lyr1 0 layer !
-    lyr2 1 layer !
-    lyr3 2 layer !
-    lyr4 3 layer ! 
-
-: lyr  layer @ ;
 
 \ internal layer struct
 0
@@ -95,11 +88,11 @@ constant /SCENE
     scene [[
         4 0 do i s.layer [[            
             l.zstm @ if
-                l.zstm i lyr load-stm
+                l.zstm i bgp load-stm
                 l.zbmp @ if 
                     my tad-path ?exist if file[ 0 l.bmp# tileattrs /tileattrs read ]file then
                 then
-            else i lyr clear-tilemap
+            else i bgp clear-tilemap
             then            
         ]] loop
         my iol-path ?exist if load-iol then
