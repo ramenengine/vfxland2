@@ -1,5 +1,4 @@
 0 scene: test
-    320e s.w! 240e s.h!
     0 s.layer [[
         1 l.bmp#!
         z" data/test.tiles.png" l.zbmp!

@@ -5,8 +5,6 @@
 : shift? 215 held 216 held or ;
 : ctrl? 217 held 218 held or ;
 : alt?  219 held 220 held or ;
-\ : mouse  ms0 0 al_get_mouse_state_axis ms0 1 al_get_mouse_state_axis ;
-\ : mickey ms1 0 al_get_mouse_state_axis ms1 1 al_get_mouse_state_axis ;
 : mouse  ms0 ALLEGRO_MOUSE_STATE.x @ ms0 ALLEGRO_MOUSE_STATE.y @ ;
 : mickey ms1 ALLEGRO_MOUSE_STATE.x @ ms1 ALLEGRO_MOUSE_STATE.y @ ;
 : 2-  rot swap - >r - r> ;

@@ -76,6 +76,7 @@ constant /SCENE
     >in @ >r
     dup constant scene [[
     r> >in ! bl parse s>z s.zname!
+    256e 16e f* fdup s.w! s.h!
     4 0 do i s.layer [[ init-layer ]] loop
 ;
 
@@ -95,6 +96,6 @@ constant /SCENE
             else i bgp clear-tilemap
             then            
         ]] loop
-        my iol-path ?exist if load-iol then
+        my iol-path load-iol 
     ]]
 ;

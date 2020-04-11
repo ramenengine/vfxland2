@@ -1,6 +1,6 @@
-objdesc: lemming
+prefab: lemming
     224 ix! 0 iy!
-;objdesc
+;prefab
 
 : extensions:  /userfields ;
 : ;extensions  drop ;

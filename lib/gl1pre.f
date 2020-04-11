@@ -279,11 +279,10 @@ screen game game
 ;
 
 0e fvalue fgr  0e fvalue fgg  0e fvalue fgb  1e fvalue fga
-0e fvalue bgr  0e fvalue bgg  1e fvalue bgb 
 
 : color  ( f: r g b )  to fgb to fgg to fgr ;
 : alpha  ( f: a )  to fga ;
-: backdrop  fgb to bgb fgg to bgg bgr to bgr ;
+\ : backdrop  fgb to bgb fgg to bgg bgr to bgr ;
 
 2e fvalue zoom
 : matrix  create 16 cells allot ;
@@ -310,7 +309,7 @@ matrix m
 ;
 
 : cls 
-    bgr bgg bgb 1e al_clear_to_color
+    fgr fgg fgb 1e al_clear_to_color
 ;
 
 ( -------------------------------------------------------------- )
@@ -417,7 +416,7 @@ constant /TILEMAP
 \ ---------------------------------------------------------------
 
 :while game update
-    2x cls draw-sprites
+    2x 0e 0e 0e color cls draw-sprites
 ;
 
 \ ---------------------------------------------------------------

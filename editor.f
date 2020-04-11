@@ -17,6 +17,7 @@ true value snapping
 0 value hovered   \ object
 0 value counter
 0 value dragging  \ bool
+0 value prefab#
 
 /screen
     screen-getset scrollx scrollx!
@@ -28,6 +29,9 @@ screen tiles
 screen attributes
 screen objed
 screen objsel
+
+: black  0e 0e 0e color 1e alpha ;
+: grey   0.5e 0.5e 0.5e color 1e alpha ;
 
 : the-scene  scene# scene ;
 : the-layer  scene# scene [[ layer# s.layer ]] ;
@@ -50,8 +54,8 @@ screen objsel
 
 : load-data
     s" data.f" included
+    load-prefabs
     s" scenes.f" included
-    s" scripts.f" included
     scene# load
 ;
 
@@ -111,18 +115,16 @@ randomize
 
 : scroll$  zstr[ scrollx . scrolly . ]zstr ;
 
-: tw  the-plane [[ tm.tw ]] f>s ;
-: th  the-plane [[ tm.th ]] f>s ;
+: tw  the-plane 's tm.tw f>s ;
+: th  the-plane 's tm.th f>s ;
 
 : ?refresh
     ed-bmp# zbmp-file mtime@ ed-bmp# bmp-mtime @ > if 50 ms load-data then
 ;
 
 : pan
-    the-plane [[
-        walt scrolly swap - 0 max scrolly!
-             scrollx swap - 0 max scrollx!
-    ]]
+    walt scrolly swap 2 / - 0 max the-scene 's s.h f>s min scrolly!
+         scrollx swap 2 / - 0 max the-scene 's s.w f>s min scrollx!
 ;
 
 : draw-plane     [[ scrollx s>f tm.scrollx! s>f scrolly tm.scrolly! draw-as-tilemap ]] ;
@@ -131,8 +133,7 @@ randomize
 r> drop ;
 
 :while map update
-    2x
-    0.5e 0.5e 0.5e 1e al_clear_to_color
+    2x grey cls
     the-plane draw-plane 
     draw-cursor
     info if 
@@ -164,7 +165,7 @@ r> drop ;
 ;
 
 :while tiles update
-    2x cls
+    2x black cls
     0e 0e ed-bmp# bmp bmpwh swap s>f s>f
         1e 0e 1e 1e al_draw_filled_rectangle
     ed-bmp# bmp 0e 0e 0 al_draw_bitmap
@@ -182,7 +183,7 @@ r> drop ;
 ;
 
 :while attributes update
-    2x cls
+    2x black cls
     0e 0e ed-bmp# bmp bmpwh swap s>f s>f
         1e 0e 1e 1e al_draw_filled_rectangle
     ed-bmp# 0= if exit then
@@ -217,7 +218,7 @@ r> drop ;
 : hue  1e frnd 1e frnd 1e frnd ;
 
 :while objed update
-    2x cls
+    2x black cls
     0 draw-parallax
     1 draw-parallax
     1 RandSeed !
@@ -233,15 +234,8 @@ r> drop ;
     draw-sprites
 ;
 
-:while objed step
-    cr walt swap . .
+: ?drag
     maus | my mx |
-    <s> pressed ctrl? not and if snapping not to snapping then
-
-    <SPACE> held ms0 1 al_mouse_button_down and if
-        pan exit
-    then
-        
     dragging if
         ms0 1 al_mouse_button_down selected 0<> and
             selected hovered = and if
@@ -270,10 +264,40 @@ r> drop ;
         loop
     
     then
+;
 
-;    
+:while objed step
+    <s> pressed ctrl? not and if snapping not to snapping then
+
+    <SPACE> held ms0 1 al_mouse_button_down and if
+        pan exit
+    then
+        
+    ?drag
+;
+
+: 1x      m al_identity_transform      m al_use_transform ;
+
+:while objsel update
+    1x 0e 0e 1e color cls
+\    m scrollx negate s>f scrolly negate s>f al_translate_transform
+    prefab# prefab [[ en if
+        counter 16 and if
+            x 1e f- y 1e f- iw s>f x f+ 1e f+ ih s>f y f+ 1e f+
+                1e 0e 0e 1e al_draw_filled_rectangle
+        then
+    then ]]
+    max-objects 0 do
+        i prefab [[ en if bmp# draw-as-sprite then ]]
+    loop
+;
+
+:while objsel step
+;
+
 
 : system
+\    cr walt swap . .
     ?refresh
     <f1> pressed if map then
     <f2> pressed if tiles then
@@ -289,7 +313,7 @@ include lib/gl1post
 
 cr
 cr .( F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    ) \ "
-cr .( MAP    TILES  OBJED  OBJSEL RELOAD                      ATTR                       ) \ "
+cr .( MAP    TILES  OBJED         RELOAD ATTR ) \ "
 cr .( Ctrl+S = Save everything ) \ "
 cr
 cr .( --== MAP ==-- ) \ "
