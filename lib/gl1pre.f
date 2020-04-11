@@ -166,10 +166,10 @@ synonym & addr immediate
 : >tos  dup @ cells swap cell+ cell+ + ;
 : >nos  dup @ 1 - over (wrap) cells swap cell+ cell+ + ;
 : pop  ( stack - val )
-    >r  r@ >tos @
+    dup >r >tos @
     r@ @ 1 - r@ (wrap) r> ! ;
 : push  ( val stack - )
-    >r  r@ @ 1 + r@ (wrap) r@ !
+    dup >r  @ 1 + r@ (wrap) r@ !
     r> >tos ! ;
 : pushes  ( ... stack n - ) swap | s |  0 ?do  s push  loop ;
 : pops    ( stack n - ... ) swap | s |  0 ?do  s pop  loop ;
@@ -212,6 +212,7 @@ synonym & addr immediate
     getset attr attr! \ attributes ---- ---- ---- --VH ---- hhhh ---w wwww
     getset en en!
     getset bmp# bmp#!
+    getset id id!
 constant /OBJECT
 
 : xy  x y ;

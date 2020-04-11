@@ -7,6 +7,7 @@ require lib/a.f
 require scene.f
 require script.f
 require utils.f
+require objlib.f
 
 0 value tile#
 true value info
@@ -93,8 +94,6 @@ randomize
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
 : ed-bmp#  the-plane 's tm.bmp# ;
 
-: 2+  rot + >r + r> ;
-
 \        fmouse >v zoom uv/ the-plane 's scrollxy v+ v>
 \        >v tm.twh v/ vtrunc v>
 \        >v tm.twh v* v>
@@ -131,13 +130,6 @@ randomize
 : draw-parallax >r 
     r@ bgp [[ scrollx s>f tm.scrollx! scrolly s>f tm.scrolly! draw-as-tilemap ]]
 r> drop ;
-
-create pen 0 , 0 ,
-: at  pen 2! ;
-: +at  pen 2@ 2+ pen 2! ;
-: at@  pen 2@ ;
-: print  >r bif 0e 0e 0e 1e at@ 1 1 2+ 2s>f 0 r@ al_draw_text
-            bif 1e 1e 1e 1e at@ 2s>f 0 r> al_draw_text ;
 
 : .scroll  zstr[ scrollx . scrolly . ]zstr print ;
 
@@ -226,18 +218,20 @@ create pen 0 , 0 ,
 ;
 
 : hue  1e frnd 1e frnd 1e frnd ;
-
 : .prefab  zstr[ ." Prefab: #" prefab# . prefab# sdata count type ]zstr print ;
+0 value mcounter
+0 value click
 
 :while objed update
     2x black cls
     0 draw-parallax
     1 draw-parallax
-    1 RandSeed !
+    
     m scrollx negate s>f zoom f* scrolly negate s>f zoom f* al_translate_transform
     m al_use_transform
     max-objects 0 do
         i object [[ en if
+            id RandSeed !
             x y iw s>f x f+ ih s>f y f+ hue
                 selected me = if counter 16 and if 1e else 0.5e then else 0.5e then
                 al_draw_filled_rectangle
@@ -251,6 +245,14 @@ create pen 0 , 0 ,
     then
 ;
 
+: ?snap ( obj )
+    [[ snapping if
+        x the-plane 's tm.tw 2e f/ f/ fround the-plane 's tm.tw 2e f/ f* x!
+        y the-plane 's tm.th 2e f/ f/ fround the-plane 's tm.th 2e f/ f* y!
+    then ]]
+;
+
+
 : ?drag
     maus | my mx |
     dragging if
@@ -260,10 +262,7 @@ create pen 0 , 0 ,
         then
         ms0 1 al_mouse_button_down 0= if
             false to dragging
-            snapping if
-                selected 's x the-plane 's tm.tw 2e f/ f/ fround the-plane 's tm.tw 2e f/ f* selected 's x!
-                selected 's y the-plane 's tm.th 2e f/ f/ fround the-plane 's tm.th 2e f/ f* selected 's y!
-            then
+            selected ?snap
         then
     else
         0 to hovered
@@ -283,14 +282,44 @@ create pen 0 , 0 ,
     then
 ;
 
+: lb-letgo  ms1 1 al_mouse_button_down 0<> ms0 1 al_mouse_button_down 0= and ;
+
 :while objed step
     <s> pressed ctrl? not and if snapping not to snapping then
 
-    <SPACE> held ms0 1 al_mouse_button_down and if
-        pan exit
+    \ ms0 1 al_mouse_button_down if
+    \     1 +to mcounter
+    \ then
+    \ 
+    \ mcounter 10 < if
+    \     lb-letgo if
+    \         0 to mcounter
+    \         -1 to click
+    \         ." Click! "
+    \     then
+    \ else
+        <SPACE> held ms0 1 al_mouse_button_down and if
+            pan exit
+        then
+            
+        ?drag
+    \ then
+    
+    <a> pressed ctrl? and if
+        maus at prefab# one-object to selected
+        selected ?snap
     then
-        
-    ?drag
+    
+    <del> pressed if
+        selected 's en if selected dismiss then
+        0 to selected
+    then
+;
+:while objed pump
+    etype ALLEGRO_EVENT_KEY_CHAR = if
+        alevt KEYBOARD_EVENT.keycode @ <q> = if prefab# 1 - 255 and to prefab# then
+        alevt KEYBOARD_EVENT.keycode @ <w> = if prefab# 1 + 255 and to prefab# then
+    then
 ;
 
 : 1x      m al_identity_transform      m al_use_transform ;
@@ -311,7 +340,6 @@ create pen 0 , 0 ,
 
 :while objsel step
 ;
-
 
 : system
     ?refresh

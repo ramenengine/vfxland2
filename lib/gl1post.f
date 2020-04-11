@@ -12,7 +12,7 @@
         me >r update r> to me
         display al_flip_display
         \ [ dev ] [if] pause pause pause [then]
-        [ dev ] [if] flushOP-gen drop [then]
+        [ dev ] [if] flushOP-gen drop pause [then]
         kbs0 kbs1 /ALLEGRO_KEYBOARD_STATE move
         kbs0 al_get_keyboard_state
         ms0 ms1 /ALLEGRO_MOUSE_STATE move
