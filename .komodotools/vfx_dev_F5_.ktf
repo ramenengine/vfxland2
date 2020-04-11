@@ -1,0 +1,16 @@
+// komodo tool: vfx dev [F5]
+// =========================
+// cwd: %p
+// doNotOpenOutputWindow: 1
+// insertOutput: 0
+// is_clean: true
+// keyboard_shortcut: F5
+// operateOnSelection: 0
+// parseOutput: 0
+// parseRegex: 0
+// runIn: no-console
+// showParsedOutputList: 0
+// type: command
+// version: 1.1.5
+// =========================
+"vfx.lnk" -dev -mswin
