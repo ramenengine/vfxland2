@@ -2,7 +2,6 @@ finit
 [undefined] max-objects [if] 256 constant max-objects [then]
 [undefined] /objslot    [if] 256 constant /objslot [then] 
 
-
 \ ------------------------------------------------------------------------
 
 0 value dev
@@ -19,6 +18,14 @@ finit
         2drop 
     loop
 ; execute
+
+\ ------------------------------------------------------------------------
+
+dev [if]
+    synonym turnkey SaveConsole
+[else]
+    synonym turnkey save
+[then]
 
 \ ------------------------------------------------------------------------
 
@@ -90,7 +97,7 @@ value /screen
 : check  0= abort" Allegro init error" ;
 
 : init-allegro
-    $5020300 0 al_install_system check
+    ALLEGRO_VERSION 0 al_install_system check
     
     al_init_image_addon check
     al_init_native_dialog_addon check

@@ -128,6 +128,7 @@ randomize
 ;
 
 : draw-plane     [[ scrollx s>f tm.scrollx! s>f scrolly tm.scrolly! draw-as-tilemap ]] ;
+
 : draw-parallax >r 
     r@ bgp [[ scrollx s>f tm.scrollx! scrolly s>f tm.scrolly! draw-as-tilemap ]]
 r> drop ;
@@ -297,7 +298,6 @@ r> drop ;
 
 
 : system
-\    cr walt swap . .
     ?refresh
     <f1> pressed if map then
     <f2> pressed if tiles then
@@ -309,14 +309,18 @@ r> drop ;
     1 +to counter
 ;
 
+: init-game
+    cr
+    cr ." F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    "
+    cr ." MAP    TILES  OBJED         RELOAD ATTR "
+    cr ." Ctrl+S = Save everything "
+    cr
+    cr ." --== MAP ==-- "
+    cr ." i = toggle info "
+    map
+;
+
 include lib/gl1post
 
-cr
-cr .( F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    ) \ "
-cr .( MAP    TILES  OBJED         RELOAD ATTR ) \ "
-cr .( Ctrl+S = Save everything ) \ "
-cr
-cr .( --== MAP ==-- ) \ "
-cr .( i = toggle info ) \ "
-map
+turnkey editor
 init
