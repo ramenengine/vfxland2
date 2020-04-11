@@ -49,7 +49,7 @@ constant /SCENE
 ;
 
 : load-stm ( zstr tilemap -- )
-    [[ ?dup if ?exist if file[ 
+    [[ ?dup if ?exist if r/o[ 
         0 sp@ 4 read drop
         0 sp@ 2 read ( w ) dup tm.cols! cells tm.stride!
         0 sp@ 2 read ( h ) tm.rows!
@@ -58,7 +58,7 @@ constant /SCENE
 ;
 
 : load-iol ( zstr -- )
-    ?dup if ?exist if file[
+    ?dup if ?exist if r/o[
         0 object bytes-left read 
     ]file then then
 ;
@@ -91,7 +91,7 @@ constant /SCENE
             l.zstm @ if
                 l.zstm i bgp load-stm
                 l.zbmp @ if 
-                    my tad-path ?exist if file[ 0 l.bmp# tileattrs /tileattrs read ]file then
+                    my tad-path ?exist if r/o[ 0 l.bmp# tileattrs /tileattrs read ]file then
                 then
             else i bgp clear-tilemap
             then            

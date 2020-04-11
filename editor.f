@@ -110,6 +110,7 @@ randomize
 : draw-cursor
     the-plane [[ 
     tile#  the-plane
+        maus 2s>f colrow tilexy scroll- fover 16e f+ fover 16e f+ 0e 0e 0e 0.5e al_draw_filled_rectangle
         maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
 ]] ;
 
@@ -275,6 +276,9 @@ r> drop ;
                         me to selected
                         true to dragging
                     then
+                    ms0 2 al_mouse_button_down if
+                        objtype to prefab#
+                    then
                 then
             then ]]
         loop
@@ -285,7 +289,6 @@ r> drop ;
 : lb-letgo  ms1 1 al_mouse_button_down 0<> ms0 1 al_mouse_button_down 0= and ;
 
 :while objed step
-\    <s> pressed ctrl? not and if snapping not to snapping then
 
     \ ms0 1 al_mouse_button_down if
     \     1 +to mcounter
@@ -352,6 +355,8 @@ r> drop ;
     <f5> pressed if load-data then
     <f8> pressed if attributes then
     <s> pressed ctrl? and if save then
+    <i> pressed if info not to info then
+\    <s> pressed ctrl? not and if snapping not to snapping then
 ;
 
 : init-game

@@ -53,7 +53,7 @@ value /sdata
 
 : load-prefabs
     z" prefabs.iol" ?dup if ?exist if
-        file[ 0 prefab [ lenof prefab /objslot * ]# read ]file
+        r/o[ 0 prefab [ lenof prefab /objslot * ]# read ]file
     then then
     s" scripts.f" included
 ;
