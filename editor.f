@@ -285,7 +285,7 @@ r> drop ;
 : lb-letgo  ms1 1 al_mouse_button_down 0<> ms0 1 al_mouse_button_down 0= and ;
 
 :while objed step
-    <s> pressed ctrl? not and if snapping not to snapping then
+\    <s> pressed ctrl? not and if snapping not to snapping then
 
     \ ms0 1 al_mouse_button_down if
     \     1 +to mcounter
@@ -343,6 +343,8 @@ r> drop ;
 
 : system
     ?refresh
+    1 +to counter
+    <f4> pressed alt? and if bye then
     <f1> pressed if maped then
     <f2> pressed if tiles then
     <f3> pressed if objed then
@@ -350,7 +352,6 @@ r> drop ;
     <f5> pressed if load-data then
     <f8> pressed if attributes then
     <s> pressed ctrl? and if save then
-    1 +to counter
 ;
 
 : init-game

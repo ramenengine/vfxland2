@@ -38,7 +38,7 @@ max-prefabs 1024 array sdata  \ static data such as actions
     vector think think!   \ temporary
 value /sdata
 
-: become  prefab me /objslot move ;
+: become  ( n ) prefab me /objslot move ;
 
 : script  ( n - <name> )
     false to warnings?
@@ -56,4 +56,11 @@ value /sdata
         file[ 0 prefab [ lenof prefab /objslot * ]# read ]file
     then then
     s" scripts.f" included
-;   
+;
+
+: like:  ( - <name> )
+    objtype >r
+    ' >body @ dup become
+    r> objtype!
+    ( old ) sdata 32 + objtype sdata 32 + /sdata 32 - move  ( preserve name )
+;
