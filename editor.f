@@ -1,5 +1,5 @@
 empty only forth definitions
-include lib/gl1pre
+include lib/gl1pre.f
 require keys.f
 require input.f
 require lib/strout.f
@@ -24,7 +24,7 @@ true value snapping
     screen-getset scrolly scrolly!
 to /screen
 
-screen map
+screen maped
 screen tiles
 screen attributes
 screen objed
@@ -81,6 +81,7 @@ screen objsel
             then
         ]] loop
     ]]
+    cr ." DATA SAVED."
 ;
 
 : randomize
@@ -113,8 +114,6 @@ randomize
         maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
 ]] ;
 
-: scroll$  zstr[ scrollx . scrolly . ]zstr ;
-
 : tw  the-plane 's tm.tw f>s ;
 : th  the-plane 's tm.th f>s ;
 
@@ -127,22 +126,32 @@ randomize
          scrollx swap 2 / - 0 max the-scene 's s.w f>s min scrollx!
 ;
 
-: draw-plane     [[ scrollx s>f tm.scrollx! s>f scrolly tm.scrolly! draw-as-tilemap ]] ;
+: draw-plane  [[ scrollx s>f tm.scrollx! s>f scrolly tm.scrolly! draw-as-tilemap ]] ;
 
 : draw-parallax >r 
     r@ bgp [[ scrollx s>f tm.scrollx! scrolly s>f tm.scrolly! draw-as-tilemap ]]
 r> drop ;
 
-:while map update
+create pen 0 , 0 ,
+: at  pen 2! ;
+: +at  pen 2@ 2+ pen 2! ;
+: at@  pen 2@ ;
+: print  >r bif 0e 0e 0e 1e at@ 1 1 2+ 2s>f 0 r@ al_draw_text
+            bif 1e 1e 1e 1e at@ 2s>f 0 r> al_draw_text ;
+
+: .scroll  zstr[ scrollx . scrolly . ]zstr print ;
+
+:while maped update
     2x grey cls
     the-plane draw-plane 
     draw-cursor
-    info if 
-        bif 1e 1e 1e 1e 0e viewh 8 - s>f 0 scroll$ al_draw_text
+    info if
+        2x
+        0 viewh 8 - at   .scroll
     then
 ;
 
-:while map step
+:while maped step
     ms0 1 al_mouse_button_down if
         <SPACE> held  if
             pan
@@ -218,6 +227,8 @@ r> drop ;
 
 : hue  1e frnd 1e frnd 1e frnd ;
 
+: .prefab  zstr[ ." Prefab: #" prefab# . prefab# sdata count type ]zstr print ;
+
 :while objed update
     2x black cls
     0 draw-parallax
@@ -233,6 +244,11 @@ r> drop ;
         then ]]
     loop
     draw-sprites
+    info if
+        2x
+        0 viewh 8 - at   .scroll
+        96 0 +at  .prefab
+    then
 ;
 
 : ?drag
@@ -299,7 +315,7 @@ r> drop ;
 
 : system
     ?refresh
-    <f1> pressed if map then
+    <f1> pressed if maped then
     <f2> pressed if tiles then
     <f3> pressed if objed then
     <f4> pressed if objsel then
@@ -312,12 +328,12 @@ r> drop ;
 : init-game
     cr
     cr ." F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    "
-    cr ." MAP    TILES  OBJED         RELOAD ATTR "
+    cr ." MAPED  TILES  OBJED         RELOAD ATTR "
     cr ." Ctrl+S = Save everything "
     cr
     cr ." --== MAP ==-- "
     cr ." i = toggle info "
-    map
+    maped
 ;
 
 include lib/gl1post

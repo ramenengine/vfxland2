@@ -10,10 +10,13 @@ drop
 128 constant /userfields
 
 max-prefabs /objslot array prefab
-max-prefabs 256 cells array sdata  \ static data such as actions
+max-prefabs 1024 array sdata  \ static data such as actions
+
+: lastword  last @ ctrl>nfa count ;
 
 : prefab: ( n - <name> ) ( - n )
     dup constant dup prefab [[
+    dup >r lastword r> sdata place
     dup objtype!
         16 * s>f fdup xy!  \ default positioning; can be changed using the prefabs.iol file
     true en!
@@ -30,7 +33,7 @@ max-prefabs 256 cells array sdata  \ static data such as actions
 
 ( TODO: actions )
 
-0
+32  \ name (1+31)
     vector start start!
     vector think think!   \ temporary
 value /sdata
