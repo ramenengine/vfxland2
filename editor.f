@@ -338,5 +338,5 @@ create pen 0 , 0 ,
 
 include lib/gl1post
 
-turnkey editor
+export [if] turnkey editor [then]  \ turnkey (save) breaks reloading
 init

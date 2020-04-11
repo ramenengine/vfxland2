@@ -7,6 +7,7 @@ finit
 0 value dev
 0 value fullscreen
 0 value mswin
+0 value export
 
 :noname
     CommandLine 2drop
@@ -15,6 +16,7 @@ finit
             2dup s" -dev" compare 0= dev or to dev 
             2dup s" -fullscreen" compare 0= fullscreen or to fullscreen 
             2dup s" -mswin" compare 0= mswin or to mswin
+            2dup s" -export" compare 0= export or to export
         2drop 
     loop
 ; execute
