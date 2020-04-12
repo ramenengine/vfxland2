@@ -280,6 +280,7 @@ screen game game
 
 : stream ( zstr loopmode - )
     strm ?dup if al_destroy_audio_stream  0 to strm then
+    over 0= if 2drop exit then
     >r
     3 2048  al_load_audio_stream
         dup 0 = abort" Failed to stream audio file."
@@ -421,7 +422,7 @@ constant /TILEMAP
             tm.tw tm.th dx dy t 24 rshift al_draw_bitmap_region
         then
     ]]
-;
+;   
 
 \ ---------------------------------------------------------------
 
