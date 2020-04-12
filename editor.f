@@ -122,15 +122,16 @@ randomize
 ;
 
 : pan
-    walt scrolly swap 2 / - 0 max the-scene 's s.h f>s min scrolly!
-         scrollx swap 2 / - 0 max the-scene 's s.w f>s min scrollx!
+    walt scrolly swap 2 / - 0 max the-scene 's s.h f>s viewh - min scrolly!
+         scrollx swap 2 / - 0 max the-scene 's s.w f>s vieww - min scrollx!
 ;
 
 : draw-plane  [[ scrollx s>f tm.scrollx! s>f scrolly tm.scrolly! draw-as-tilemap ]] ;
 
-: draw-parallax >r 
-    r@ bgp [[ scrollx s>f tm.scrollx! scrolly s>f tm.scrolly! draw-as-tilemap ]]
-r> drop ;
+: draw-parallax dup the-scene 's s.layer >r
+    bgp [[ scrollx s>f r@ 's l.parax f* tm.scrollx!
+           scrolly s>f r> 's l.paray f* tm.scrolly! draw-as-tilemap ]]
+;
 
 : .scroll  zstr[ scrollx . scrolly . ]zstr print ;
 
@@ -160,7 +161,6 @@ r> drop ;
     <e> pressed if -1 to tile# then
     <h> pressed if tile# $01000000 xor to tile# then
     <v> pressed if tile# $02000000 xor to tile# then
-    <i> pressed if info not to info then
     <1> pressed if 0 to layer# then
     <2> pressed if 1 to layer# then
     <3> pressed if 2 to layer# then
