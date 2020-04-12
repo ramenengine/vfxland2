@@ -43,7 +43,7 @@ dev fullscreen not and mswin and [if]
 : cold
     ." Hemlo" cr
     warm
-    shutdown
+    [ dev not ] [if] shutdown [else] quit [then]
 ;
 
 ' cold is EntryPoint

@@ -38,8 +38,8 @@ constant /LAYER
     4 /layer field[] s.layer
 constant /SCENE
 
-/scene 200 array scene
-32 4096 cells array tiledata  \ attribute data
+256 /scene array scene
+64 1024 cells array tiledata  \ attribute data (64 tilesets supported)
 
 : init-layer  16e fdup l.th! l.tw! 1e fdup l.paray! l.parax!
     0e fdup l.scrolly! l.scrollx! ;
@@ -57,6 +57,16 @@ constant /SCENE
     ]file then then ]] 
 ;
 
+: create-stm ( cols rows zstr -- )
+    newfile[
+        s" STMP" write
+        over sp@ 2 write drop
+        dup sp@ 2 write drop
+        * cells dup allocate throw dup rot write
+        free throw
+    ]file
+;
+
 : load-iol ( zstr -- )
     ?dup if ?exist if r/o[
         0 object bytes-left read 
@@ -72,11 +82,14 @@ constant /SCENE
 : clear-tilemap  ( tilemap -- )
     [[ tm.base  tm.dims * cells  erase  ]] ;
 
+: clear-objects  ( -- )
+    0 object  [ lenof object /objslot * ]# erase ;
+
 : scene:  ( i - <name> ) ( - n )
     >in @ >r
     dup constant scene [[
     r> >in ! bl parse s>z s.zname!
-    256e 16e f* fdup s.w! s.h!
+    [ bgp1 's tm.cols 16 * ]# s>f fdup s.w! s.h!
     4 0 do i s.layer [[ init-layer ]] loop
 ;
 
@@ -88,14 +101,21 @@ constant /SCENE
 : load  ( n )
     scene [[
         4 0 do i s.layer [[            
-            l.zstm @ if
+            l.zstm @ l.zstm zcount FileExist? and if
                 l.zstm i bgp load-stm
-                l.zbmp @ if 
-                    my tad-path ?exist if r/o[ 0 l.bmp# tileattrs /tileattrs read ]file then
-                then
-            else i bgp clear-tilemap
+            else
+                i bgp [[
+                    256 tm.cols! 256 tm.rows!
+                    256 cells tm.stride!
+                    me clear-tilemap
+                ]]
             then            
+            l.zbmp @ if 
+                my tad-path ?exist if
+                    r/o[ 0 l.bmp# tileattrs /tileattrs read ]file
+                then
+            then
         ]] loop
-        my iol-path load-iol 
+        my iol-path ?exist if load-iol else clear-objects then
     ]]
 ;

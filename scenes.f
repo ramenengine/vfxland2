@@ -11,3 +11,14 @@
         z" data/test.test.layer-2.map001.stm" l.zstm!
     ]]
 ;scene
+
+1 scene: scene1
+    0 s.layer [[
+        1 l.bmp#!
+        z" data/scene1.layer-1.stm" l.zstm!
+    ]]
+    1 s.layer [[
+        1 l.bmp#!
+        z" data/scene1.layer-2.stm" l.zstm!
+    ]]
+;scene

@@ -7,8 +7,8 @@
 
 :while game update
     2x cls 
-    pln1 [[ draw-as-tilemap ]] 
-    pln2 [[ draw-as-tilemap ]] 
+    bgp1 [[ draw-as-tilemap ]] 
+    bgp2 [[ draw-as-tilemap ]] 
     draw-sprites
 ;
 

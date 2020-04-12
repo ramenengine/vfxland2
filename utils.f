@@ -1,4 +1,5 @@
 synonym | locals|
+synonym & addr immediate
 : ]#  ] postpone literal ;
 
 : bmpw  al_get_bitmap_width ;

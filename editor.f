@@ -41,16 +41,30 @@ screen objsel
 : the-stride the-plane 's tm.stride ;
 
 : load  ( scene# )
-    dup to scene#
-    load  \ load tilemaps, tile attributes, layer settings, and objects from given scene
+    to scene#
+    
+    \ create any tilemap files if they don't already exist.
+    the-scene [[
+        4 0 do i s.layer [[
+            l.zstm @ if l.zstm zcount FileExist? not if
+                cr ." Auto-creating " l.zstm count type
+                the-scene 's s.w l.tw f/ f>s
+                the-scene 's s.h l.th f/ f>s l.zstm create-stm
+            then then
+        ]] loop
+    ]]
+    
+    scene# load  \ load tilemaps, tile attributes, layer settings, and objects from given scene
     
     \ load tileset(s)
     the-scene [[
         4 0 do i s.layer [[ l.bmp# l.zbmp load-bitmap ]] loop
     ]]
+    
     \ copy the layer properties from the scene layer to the engine layer
     the-layer   [[ l.tw l.th l.bmp# ]]
     the-plane   [[ tm.bmp#! tm.th! tm.tw! ]]
+    
 ;
 
 : load-data
