@@ -422,7 +422,10 @@ constant /TILEMAP
             tm.tw tm.th dx dy t 24 rshift al_draw_bitmap_region
         then
     ]]
-;   
+;
+
+: find-tile ( col row tilemap -- adr )
+    [[ tm.stride * swap cells + tm.base + ]] ;
 
 \ ---------------------------------------------------------------
 

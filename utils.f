@@ -18,8 +18,8 @@ also system
   [char] " parse >SyspadZ z+
 ;
 ndcs: ( -- )
-  postpone (z")  [char] " parse z$,  postpone z+ 
-  discard-sinline  ;
+    postpone (z")  [char] " parse z$,  postpone z+ 
+    discard-sinline  ;
 previous
 
 synonym file-exists fileExist? 
@@ -41,3 +41,5 @@ create pen 0 , 0 ,
             bif 1e 1e 1e 1e at@ 2s>f 0 r> al_draw_text ;
 
 : type  ?dup if type else drop then ;
+
+

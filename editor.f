@@ -8,8 +8,9 @@ require scene.f
 require script.f
 require utils.f
 require objlib.f
+require tileutils.f
 
-0 value tile#
+\ 0 value tile#
 true value info
 0 value scene#
 0 value layer#
@@ -19,6 +20,8 @@ true value snapping
 0 value counter
 0 value dragging  \ bool
 0 value prefab#
+
+create tile-selection 0 , 0 , 1 , 1 ,  \ col , row , #cols , #rows , 
 
 /screen
     screen-getset scrollx scrollx!
@@ -31,14 +34,60 @@ screen attributes
 screen objed
 screen objsel
 
+128 128 plane: tbrush ;plane    \ clipboard tilemap
+create tsel /tilemap /allot     \ describes selection source
+0 value tsel-plane#             \ index of the background plane where the selection is
+
 : black  0e 0e 0e color 1e alpha ;
 : grey   0.5e 0.5e 0.5e color 1e alpha ;
+: keycode alevt KEYBOARD_EVENT.keycode @ ;
 
 : the-scene  scene# scene ;
 : the-layer  scene# scene [[ layer# s.layer ]] ;
 : the-plane  layer# bgp ;
 : the-base   the-plane 's tm.base ;
 : the-stride the-plane 's tm.stride ;
+
+\        fmouse >v zoom uv/ the-plane 's scrollxy v+ v>
+\        >v tm.twh v/ vtrunc v>
+\        >v tm.twh v* v>
+\        >v scrollxy v- v>
+
+\        fmouse >v zoom uv/ the-plane 's scrollxy v+
+\        tm.twh v/ vtrunc tm.twh v* scrollxy v- v>
+
+: maus  mouse zoom f>s / swap zoom f>s / swap scrollx scrolly 2+ ;
+: colrow  the-plane [[ fswap tm.tw f/ ftrunc fswap tm.th f/ ftrunc ]] ;
+: tilexy  the-plane [[ fswap tm.tw f* fswap tm.th f* ]] ;
+: scroll-  fswap scrollx s>f f- fswap scrolly s>f f- ;
+
+: resize-tilemap ( cols rows tilemap )
+    [[ 2dup tm.rows! tm.cols!
+    the-plane [[ tm.tw tm.th ]] tm.th! tm.tw! 
+    s>f tm.th f* tm.h!  s>f tm.tw f* tm.w! ]] ;
+
+: select-tiles ( col row cols rows )
+    tsel-plane# bgp tsel /tilemap move
+    layer# to tsel-plane#  tsel resize-tilemap
+    tsel-plane# bgp [[ ( row ) tm.stride * swap ( col ) cells + tm.base + ]]
+        tsel [[ tm.base! ]]
+;
+
+: tile#   ( - n ) tbrush 's tm.base @ ;
+: tile#!  ( n ) 1 1 tbrush resize-tilemap tbrush 's tm.base ! ;
+
+
+: copy-tiles
+    tsel [[ tm.cols tm.rows ]] tbrush resize-tilemap
+    tsel tbrush 0 0 tmove
+;
+: there  maus 2s>f colrow f>s f>s swap ;
+: paste-tiles  tbrush the-plane there tmove ;
+: erase-tiles
+    there the-plane find-tile
+        tsel [[ tm.cols cells tm.rows ]] the-plane 's tm.stride 2erase ;
+: cut-tiles   copy-tiles erase-tiles ;
+    
 
 : load  ( scene# )
     to scene#
@@ -108,25 +157,20 @@ randomize
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
 : ed-bmp#  the-plane 's tm.bmp# ;
 
-\        fmouse >v zoom uv/ the-plane 's scrollxy v+ v>
-\        >v tm.twh v/ vtrunc v>
-\        >v tm.twh v* v>
-\        >v scrollxy v- v>
-
-\        fmouse >v zoom uv/ the-plane 's scrollxy v+
-\        tm.twh v/ vtrunc tm.twh v* scrollxy v- v>
-
-: maus  mouse zoom f>s / swap zoom f>s / swap scrollx scrolly 2+ ;
-: colrow  fswap tm.tw f/ ftrunc fswap tm.th f/ ftrunc ;
-: tilexy  fswap tm.tw f* fswap tm.th f* ;
-: scroll-  fswap scrollx s>f f- fswap scrolly s>f f- ;
-
+: selw*  tile-selection 2 cells + @ * ;
+: selh*  tile-selection 3 cells + @ * ;
+        
 : draw-cursor
     the-plane [[ 
+    maus 2s>f colrow tilexy scroll- fover tm.tw f>s selw* s>f f+ fover tm.th f>s selh* s>f f+
+        0e 0e 0e 0.5e al_draw_filled_rectangle
     tile#  the-plane
-        maus 2s>f colrow tilexy scroll- fover 16e f+ fover 16e f+ 0e 0e 0e 0.5e al_draw_filled_rectangle
         maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
 ]] ;
+
+: +sel  ( x y )
+    swap tile-selection 8 + 2@ 2+ 1 max 128 min swap 1 max 128 min swap tile-selection 8 + 2! ;
+                
 
 : tw  the-plane 's tm.tw f>s ;
 : th  the-plane 's tm.th f>s ;
@@ -159,27 +203,47 @@ randomize
     then
 ;
 
+: (tselect)  there tile-selection 8 + 2@ swap select-tiles ;
+
 :while maped step
     ms0 1 al_mouse_button_down if
         <SPACE> held  if
             pan
         else
-            tile#
-                maus th / the-stride * swap tw / cells + the-base + !
+\            tile#
+\                maus th / the-stride * swap tw / cells + the-base + !
+            paste-tiles
         then 
     then
     ms0 2 al_mouse_button_down if
-        maus th / the-stride * swap tw / cells + the-base + @ to tile#
+        maus th / the-stride * swap tw / cells + the-base + @ tile#!
     then
-    ms0 3 al_mouse_button_down if then
-    <e> pressed if -1 to tile# then
-    <h> pressed if tile# $01000000 xor to tile# then
-    <v> pressed if tile# $02000000 xor to tile# then
-    <1> pressed if 0 to layer# then
-    <2> pressed if 1 to layer# then
-    <3> pressed if 2 to layer# then
-    <4> pressed if 3 to layer# then
+    ctrl? not shift? not and if 
+        <e> pressed if -1 tile#! then
+        <h> pressed if tile# $01000000 xor tile#! then
+        <v> pressed if tile# $02000000 xor tile#! then
+        <1> pressed if 0 to layer# then
+        <2> pressed if 1 to layer# then
+        <3> pressed if 2 to layer# then
+        <4> pressed if 3 to layer# then
+    then
+    ctrl? if
+        <c> pressed if (tselect) copy-tiles then
+        <e> pressed if (tselect) erase-tiles then
+        <x> pressed if (tselect) cut-tiles then
+    then
 ;
+:while maped pump
+    etype ALLEGRO_EVENT_KEY_CHAR = if
+        shift? if
+            <up>    keycode = if 0 -1 +sel then
+            <down>  keycode = if 0 1 +sel then
+            <left>  keycode = if -1 0 +sel then
+            <right> keycode = if 1 0 +sel then
+        then
+    then
+;
+
 
 :while tiles update
     2x black cls
@@ -195,7 +259,7 @@ randomize
 
 :while tiles step
     ms0 1 al_mouse_button_down if
-        mouse-tile to tile#
+        mouse-tile tile#!
     then
 ;
 
@@ -334,8 +398,8 @@ randomize
 ;
 :while objed pump
     etype ALLEGRO_EVENT_KEY_CHAR = if
-        alevt KEYBOARD_EVENT.keycode @ <q> = if prefab# 1 - 255 and to prefab# then
-        alevt KEYBOARD_EVENT.keycode @ <w> = if prefab# 1 + 255 and to prefab# then
+        <q> keycode = if prefab# 1 - 255 and to prefab# then
+        <w> keycode = if prefab# 1 + 255 and to prefab# then
     then
 ;
 
@@ -378,9 +442,19 @@ randomize
     cr ." F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    "
     cr ." MAPED  TILES  OBJED         RELOAD ATTR "
     cr ." Ctrl+S = Save everything "
+    cr ." i = toggle info "
     cr
     cr ." --== MAP ==-- "
-    cr ." i = toggle info "
+    cr ." e = eraser"
+    cr ." 1-4 = select layer"
+    cr ." R-click = pick tile"
+    cr ." Shift+up/down/left/right = modify selection (temporary)"
+\    cr ." Shift+Drag = select"
+    cr ." space+Drag = pan"
+    cr ." CTRL+C, CTRL+X = get brush"
+    cr ." CTRL+E = erase selection"
+\    cr ." CTRL+F = fill selection with brush"
+\    cr ." h/v = flip brush"
     maped
 ;
 

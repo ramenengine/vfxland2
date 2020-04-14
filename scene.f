@@ -100,7 +100,8 @@ constant /SCENE
 
 : load  ( n )
     scene [[
-        4 0 do i s.layer [[            
+        4 0 do i s.layer [[
+            l.tw l.th i bgp [[ tm.th! tm.tw! ]]
             l.zstm @ l.zstm zcount FileExist? and if
                 l.zstm i bgp load-stm
             else
@@ -118,4 +119,15 @@ constant /SCENE
         ]] loop
         my iol-path ?exist if load-iol else clear-objects then
     ]]
+;
+
+
+: .scenes
+    [ lenof scene ]# 0 do
+        i scene [[ s.zname zcount ?dup if
+            cr ." #" i 3 .r ."  --- " type ."  --- " 
+            s.w f>s . ." x " s.h f>s .
+            else drop then
+        ]]
+    loop cr 
 ;
