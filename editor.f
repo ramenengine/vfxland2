@@ -34,19 +34,21 @@ screen attributes
 screen objed
 screen objsel
 
-128 128 plane: tbrush ;plane    \ clipboard tilemap
+256 256 plane: tbrush ;plane    \ clipboard tilemap
 create tsel /tilemap /allot     \ describes selection source
 0 value tsel-plane#             \ index of the background plane where the selection is
 
 : black  0e 0e 0e color 1e alpha ;
 : grey   0.5e 0.5e 0.5e color 1e alpha ;
 : keycode alevt KEYBOARD_EVENT.keycode @ ;
+: bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
 
 : the-scene  scene# scene ;
 : the-layer  scene# scene [[ layer# s.layer ]] ;
 : the-plane  layer# bgp ;
 : the-base   the-plane 's tm.base ;
 : the-stride the-plane 's tm.stride ;
+: the-bmp#   the-plane 's tm.bmp# ;
 
 \        fmouse >v zoom uv/ the-plane 's scrollxy v+ v>
 \        >v tm.twh v/ vtrunc v>
@@ -73,9 +75,19 @@ create tsel /tilemap /allot     \ describes selection source
         tsel [[ tm.base! ]]
 ;
 
-: tile#   ( - n ) tbrush 's tm.base @ ;
-: tile#!  ( n ) 1 1 tbrush resize-tilemap tbrush 's tm.base ! ;
+: pick-tiles ( tile# cols rows )
+    the-bmp# bmp 0= if 3drop exit then
+    the-bmp# bmp bmpw the-plane 's tm.tw f>s /
+        | tcols #rows #cols t# |
+    #cols #rows 2dup tbrush resize-tilemap tsel resize-tilemap
+    #cols 0 do #rows 0 do  i j tcols * + t# + i j tbrush find-tile !
+    loop loop 
+;
 
+: tile#   ( - n ) tbrush 's tm.base @ ;
+: tile#!  ( n ) 1 1 tbrush resize-tilemap tbrush 's tm.base !
+    1 1 tile-selection 8 + 2! ;
+0 tile#!
 
 : copy-tiles
     tsel [[ tm.cols tm.rows ]] tbrush resize-tilemap
@@ -87,6 +99,9 @@ create tsel /tilemap /allot     \ describes selection source
     there the-plane find-tile
         tsel [[ tm.cols cells tm.rows ]] the-plane 's tm.stride 2erase ;
 : cut-tiles   copy-tiles erase-tiles ;
+    
+
+    
     
 
 : load  ( scene# )
@@ -154,19 +169,22 @@ create tsel /tilemap /allot     \ describes selection source
 ;
 randomize
 
-: bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
-: ed-bmp#  the-plane 's tm.bmp# ;
-
 : selw*  tile-selection 2 cells + @ * ;
 : selh*  tile-selection 3 cells + @ * ;
         
 : draw-cursor
     the-plane [[ 
-    maus 2s>f colrow tilexy scroll- fover tm.tw f>s selw* s>f f+ fover tm.th f>s selh* s>f f+
-        0e 0e 0e 0.5e al_draw_filled_rectangle
-    tile#  the-plane
-        maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
-]] ;
+        maus 2s>f colrow tilexy scroll- fover tm.tw f>s selw* s>f f+ fover tm.th f>s selh* s>f f+
+        0e 0e 0e 0.5e al_draw_filled_rectangle ]]
+\    tile#  the-plane
+\        maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
+    tbrush [[
+        the-plane 's tm.bmp# tm.bmp#!
+        the-plane 's tm.tw tm.tw!
+        the-plane 's tm.th tm.th!
+        the-plane [[ maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap ]] xy!
+        draw-as-tilemap ]]    
+;
 
 : +sel  ( x y )
     swap tile-selection 8 + 2@ 2+ 1 max 128 min swap 1 max 128 min swap tile-selection 8 + 2! ;
@@ -176,7 +194,7 @@ randomize
 : th  the-plane 's tm.th f>s ;
 
 : ?refresh
-    ed-bmp# zbmp-file mtime@ ed-bmp# bmp-mtime @ > if 50 ms load-data then
+    the-bmp# zbmp-file mtime@ the-bmp# bmp-mtime @ > if 50 ms load-data then
 ;
 
 : pan
@@ -233,7 +251,8 @@ randomize
         <x> pressed if (tselect) cut-tiles then
     then
 ;
-:while maped pump
+
+: ?changesel
     etype ALLEGRO_EVENT_KEY_CHAR = if
         shift? if
             <up>    keycode = if 0 -1 +sel then
@@ -244,31 +263,43 @@ randomize
     then
 ;
 
+:while maped pump
+    ?changesel
+;
+
 
 :while tiles update
     2x black cls
-    0e 0e ed-bmp# bmp bmpwh swap s>f s>f
+    0e 0e the-bmp# bmp bmpwh swap s>f s>f
         1e 0e 1e 1e al_draw_filled_rectangle
-    ed-bmp# bmp 0e 0e 0 al_draw_bitmap
+    the-bmp# bmp 0e 0e 0 al_draw_bitmap
     draw-cursor
-    100000 0 do loop \ fsr fixes choppiness
 ;
 
 : tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
 : mouse-tile  the-plane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
 
 :while tiles step
-    ms0 1 al_mouse_button_down if
-        mouse-tile tile#!
+    the-bmp# bmp if
+        ms0 1 al_mouse_button_down if
+            mouse-tile tile-selection 8 + 2@ swap pick-tiles
+            ( 1 1 tile-selection 8 + 2! )
+        then
+        ms0 2 al_mouse_button_down if
+            mouse-tile tile#!
+        then
     then
+;
+:while tiles pump
+    ?changesel
 ;
 
 :while attributes update
     2x black cls
-    0e 0e ed-bmp# bmp bmpwh swap s>f s>f
+    0e 0e the-bmp# bmp bmpwh swap s>f s>f
         1e 0e 1e 1e al_draw_filled_rectangle
-    ed-bmp# 0= if exit then
-    ed-bmp# bmp 0e 0e 0 al_draw_bitmap
+    the-bmp# 0= if exit then
+    the-bmp# bmp 0e 0e 0 al_draw_bitmap
     the-plane [[
         0
         tm.bmp# bmp bmph 0 do
@@ -285,8 +316,8 @@ randomize
 : nand  invert and ;
 
 :while attributes step
-    ed-bmp# 0= if exit then
-    mouse 2 / ed-bmp# bmp bmph < swap 2 / ed-bmp# bmp bmpw < and if
+    the-bmp# 0= if exit then
+    mouse 2 / the-bmp# bmp bmph < swap 2 / the-bmp# bmp bmpw < and if
         ms0 1 al_mouse_button_down if
             the-plane [[ mouse-tile tm.bmp# 2dup tileflags 1 or -rot tileflags! ]]
         then
@@ -440,7 +471,7 @@ randomize
 : init-game
     cr
     cr ." F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    "
-    cr ." MAPED  TILES  OBJED         RELOAD ATTR "
+    cr ." MAPED  TILES  OBJED         RELOAD               ATTR "
     cr ." Ctrl+S = Save everything "
     cr ." i = toggle info "
     cr
