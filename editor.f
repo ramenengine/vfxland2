@@ -267,6 +267,8 @@ randomize
     ?changesel
 ;
 
+: tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
+: mouse-tile  the-plane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
 
 :while tiles update
     2x black cls
@@ -274,10 +276,10 @@ randomize
         1e 0e 1e 1e al_draw_filled_rectangle
     the-bmp# bmp 0e 0e 0 al_draw_bitmap
     draw-cursor
+    info if
+        0 viewh 8 - at   zstr[ mouse-tile . ]zstr print
+    then
 ;
-
-: tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
-: mouse-tile  the-plane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
 
 :while tiles step
     the-bmp# bmp if
