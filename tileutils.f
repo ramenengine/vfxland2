@@ -15,6 +15,10 @@ require utils.f
 : 2erase ( dest bytes rows stride -- )
     to dest-stride 0 ?do 2dup erase swap dest-stride + swap loop drop drop ;
 
+: 2tfill ( dest cols rows stride n -- ) | n |
+    to dest-stride 0 ?do 2dup cells bounds ?do n i ! loop swap dest-stride + swap loop
+    drop drop ;
+
 : tmove ( src-tilemap dest-tilemap x y -- )  \ negative x,y currently not supported
     0 max swap 0 max | x y dest src |
     src 's tm.stride  dest 's tm.stride  stride

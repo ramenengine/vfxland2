@@ -147,6 +147,7 @@ create tsel /tilemap /allot     \ describes selection source
     scene# load
 ;
 
+
 : save  ( - )
     \ save tilemaps, tile attributes, and objects  (layer settings are defined in scenes.f)
     the-scene [[
@@ -161,11 +162,11 @@ create tsel /tilemap /allot     \ describes selection source
                         tm.base tm.stride tm.rows * write
                     ]]
                 ]file
-                l.zbmp @ if
-                    my tad-path newfile[
-                        0 l.bmp# tileattrs /tileattrs write
-                    ]file
-                then
+\                l.bmp# bmp if
+\                    my tad-path newfile[
+\                        0 l.bmp# tileattrs /tileattrs write
+\                    ]file
+\                then
             then
         ]] loop
     ]]
@@ -278,7 +279,7 @@ randomize
     ctrl? if
         <c> pressed if (tselect) copy-tiles then
         <e> pressed if (tselect) erase-tiles then
-        <f> pressed if (tselect) fill-tiles then
+\        <f> pressed if (tselect) fill-tiles then
         <x> pressed if (tselect) cut-tiles then
     then
 ;
@@ -380,6 +381,7 @@ randomize
             x y iw s>f x f+ ih s>f y f+ hue
                 selected me = if counter 16 and if 1e else 0.5e then else 0.5e then
                 al_draw_filled_rectangle
+            selected me = if x f>s y f>s 8 8 2- at zstr[ me object>i . ]zstr print then
         then ]]
     loop
     render-sprites
@@ -495,9 +497,9 @@ randomize
     <f1> pressed if maped then
     <f2> pressed if tiles then
     <f3> pressed if objed then
-    <f4> pressed if objsel then
+    \ <f4> pressed if objsel then
     <f5> pressed if load-data then
-    <f8> pressed if attributes then
+\    <f8> pressed if attributes then
     <s> pressed ctrl? and if save then
     <i> pressed if info not to info then
 \    <s> pressed ctrl? not and if snapping not to snapping then
@@ -506,7 +508,7 @@ randomize
 : init-game
     cr
     cr ." F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    "
-    cr ." MAPED  TILES  OBJED         RELOAD               ATTR "
+    cr ." MAPED  TILES  OBJED         RELOAD               "
     cr ." Ctrl+S = Save everything "
     cr ." i = toggle info "
     cr
@@ -526,5 +528,5 @@ randomize
 
 include lib/gl1post
 
-export [if] turnkey editor [then]  \ turnkey (save) breaks reloading
+export? [if] turnkey editor [then]  \ turnkey (save) breaks reloading
 init

@@ -7,7 +7,7 @@ finit
 0 value dev
 0 value fullscreen
 0 value mswin
-0 value export
+0 value export?
 
 :noname
     CommandLine 2drop
@@ -16,7 +16,7 @@ finit
             2dup s" -dev" compare 0= dev or to dev 
             2dup s" -fullscreen" compare 0= fullscreen or to fullscreen 
             2dup s" -mswin" compare 0= mswin or to mswin
-            2dup s" -export" compare 0= export or to export
+            2dup s" -export" compare 0= export? or to export?
         2drop 
     loop
 ; execute
@@ -173,10 +173,10 @@ synonym & addr immediate
     r> >tos ! ;
 : pushes  ( ... stack n - ) swap | s |  0 ?do  s push  loop ;
 : pops    ( stack n - ... ) swap | s |  0 ?do  s pop  loop ;
-: lenof  ' >body cell+ @ 1 + ;
+: lenof      ' >body cell+ @ 1 + ;
+\ : itemsizeof ' >body @ ;
 : array  ( #items itemsize ) create dup , over 1 - , * /allot
          ( i - adr ) does> >r r@ (wrap) r@ @ * r> cell+ cell+ + ;
-
 
 0 value me
 : (fgetter)  ( ofs - <name> ofs ) create dup , does> @ me + sf@ ;
@@ -226,6 +226,8 @@ value /OBJECT
 max-objects /objslot array object
 screen game game
 0 object to me
+
+: object>i  0 object - /objslot / ;
 
 : btn  kbs0 swap al_key_down ;
 

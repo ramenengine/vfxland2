@@ -96,7 +96,7 @@ constant /SCENE
 : ;scene ]] ;
 
 : iol-path  ( scene ) z" data/" z$ swap 's s.zname z+  +z" .iol" ;
-: tad-path  ( layer ) 's l.zbmp zcount 4 - s>z +z" .tad" ;
+\ : tad-path  ( layer ) 's l.bmp# zbmp-file zcount 4 - s>z +z" .tad" ;
 
 : load  ( n )
     scene [[
@@ -111,11 +111,11 @@ constant /SCENE
                     me clear-tilemap
                 ]]
             then            
-            l.zbmp @ if 
-                my tad-path ?exist if
-                    r/o[ 0 l.bmp# tileattrs /tileattrs read ]file
-                then
-            then
+\            l.bmp# bmp if
+\                my tad-path ?exist if
+\                    r/o[ 0 l.bmp# tileattrs /tileattrs read ]file
+\                then
+\            then
         ]] loop
         my iol-path ?exist if load-iol else clear-objects then
     ]]
