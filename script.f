@@ -2,10 +2,7 @@
 
 /OBJECT
     getset objtype objtype!
-    getset action# action#!
-    fgetset vx vx!
-    fgetset vy vy!
-drop
+to /OBJECT
 
 128 constant /userfields
 
@@ -29,9 +26,6 @@ max-prefabs 1024 array sdata  \ static data such as actions
 : vector  (vector) (vector!) cell+ ;
 : ::  ( prefab - <vector> )
     prefab [[ :noname ' >body @ objtype sdata + ! ]] ;
-
-
-( TODO: actions )
 
 32  \ name (1+31)
     vector start start!

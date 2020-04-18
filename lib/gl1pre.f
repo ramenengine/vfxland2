@@ -213,7 +213,7 @@ synonym & addr immediate
     getset en en!
     getset bmp# bmp#!
     getset id id!
-constant /OBJECT
+value /OBJECT
 
 : xy  x y ;
 : xy!  y! x! ;
