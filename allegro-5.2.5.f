@@ -3237,7 +3237,7 @@ extern "C" boold al_set_mixer_playing( void * mixer, int state );
 \ extern "C" al_set_mouse_emulation_mode( );
 \ extern "C" al_set_mouse_w( );
 \ extern "C" al_set_mouse_wheel_precision( );
-\ extern "C" al_set_mouse_xy( );
+extern "C" void al_set_mouse_xy( void * display, int x, int y );
 \ extern "C" al_set_mouse_z( );
 \ extern "C" al_set_new_bitmap_depth( );
 \ extern "C" al_set_new_bitmap_flags( );

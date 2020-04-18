@@ -42,6 +42,8 @@ create tsel /tilemap /allot     \ describes selection source
 : grey   0.5e 0.5e 0.5e color 1e alpha ;
 : keycode alevt KEYBOARD_EVENT.keycode @ ;
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
+: lb-pressed ms1 1 al_mouse_button_down 0= ms0 1 al_mouse_button_down 0<> and ;
+: lb-letgo  ms1 1 al_mouse_button_down 0<> ms0 1 al_mouse_button_down 0= and ;
 
 : the-scene  scene# scene ;
 : the-layer  scene# scene [[ layer# s.layer ]] ;
@@ -174,7 +176,7 @@ randomize
         
 : draw-cursor
     the-plane [[ 
-        maus 2s>f colrow tilexy scroll- fover tm.tw f>s selw* s>f f+ fover tm.th f>s selh* s>f f+
+        tile-selection 2@ swap 2s>f tilexy scroll- fover tm.tw f>s selw* s>f f+ fover tm.th f>s selh* s>f f+
         0e 0e 0e 0.5e al_draw_filled_rectangle ]]
 \    tile#  the-plane
 \        maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
@@ -209,7 +211,6 @@ randomize
            scrolly s>f r> 's l.paray f* tm.scrolly! draw-as-tilemap ]]
 ;
 
-: .scroll  zstr[ scrollx . scrolly . ]zstr print ;
 
 :while maped update
     2x grey cls
@@ -217,14 +218,31 @@ randomize
     draw-cursor
     info if
         2x
-        0 viewh 8 - at   .scroll
+        0 viewh 8 - at
+        zstr[ ." Layer #" layer# 1 + . scrollx . scrolly . ]zstr print 
     then
 ;
 
-: (tselect)  there tile-selection 8 + 2@ swap select-tiles ;
+: (tselect)  tile-selection 2@ swap tile-selection 8 + 2@ swap select-tiles ;
+
+0 value startx 0 value starty
+: shift-select
+    shift? if
+        lb-pressed if mouse to starty to startx then
+        ms0 1 al_mouse_button_down if
+            there tile-selection 2@ swap 2- 1 1 2+ swap tile-selection 8 + 2!
+        then
+        lb-letgo if display startx starty al_set_mouse_xy
+            there swap tile-selection 2! then
+    then
+    ms0 1 al_mouse_button_down 0= if
+        there swap tile-selection 2!
+    then
+;
 
 :while maped step
-    ms0 1 al_mouse_button_down if
+    shift-select
+    ms0 1 al_mouse_button_down 0<> shift? not and if
         <SPACE> held  if
             pan
         else
@@ -264,7 +282,7 @@ randomize
 ;
 
 :while maped pump
-    ?changesel
+\    ?changesel
 ;
 
 : tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
@@ -282,6 +300,7 @@ randomize
 ;
 
 :while tiles step
+    shift-select
     the-bmp# bmp if
         ms0 1 al_mouse_button_down if
             mouse-tile tile-selection 8 + 2@ swap pick-tiles
@@ -293,7 +312,7 @@ randomize
     then
 ;
 :while tiles pump
-    ?changesel
+\    ?changesel
 ;
 
 :while attributes update
@@ -352,8 +371,8 @@ randomize
     draw-sprites
     info if
         2x
-        0 viewh 8 - at   .scroll
-        96 0 +at  .prefab
+        0 viewh 8 - at   zstr[ scrollx . scrolly . ]zstr print 
+        128 viewh 8 - at  .prefab
     then
 ;
 
@@ -397,10 +416,9 @@ randomize
     then
 ;
 
-: lb-letgo  ms1 1 al_mouse_button_down 0<> ms0 1 al_mouse_button_down 0= and ;
-
 :while objed step
-
+    alt? not to snapping
+    
     \ ms0 1 al_mouse_button_down if
     \     1 +to mcounter
     \ then
