@@ -21,6 +21,12 @@ true value snapping
 0 value dragging  \ bool
 0 value prefab#
 
+defer objed-ext   \ adds additional events to the OBJED mode
+    ' noop is objed-ext
+
+defer render-sprites
+    ' draw-sprites is render-sprites
+
 create tile-selection 0 , 0 , 1 , 1 ,  \ col , row , #cols , #rows , 
 
 /screen
@@ -101,9 +107,9 @@ create tsel /tilemap /allot     \ describes selection source
     there the-plane find-tile
         tsel [[ tm.cols cells tm.rows ]] the-plane 's tm.stride 2erase ;
 : cut-tiles   copy-tiles erase-tiles ;
-    
-
-    
+: fill-tiles 
+    there the-plane find-tile
+        tsel [[ tm.cols cells tm.rows ]] the-plane 's tm.stride tile# 2tfill ;
     
 
 : load  ( scene# )
@@ -134,6 +140,7 @@ create tsel /tilemap /allot     \ describes selection source
 ;
 
 : load-data
+    s" editor.ext.f" FileExist? if s" require editor.ext.f" evaluate then
     s" data.f" included
     load-prefabs
     s" scenes.f" included
@@ -225,22 +232,27 @@ randomize
 
 : (tselect)  tile-selection 2@ swap tile-selection 8 + 2@ swap select-tiles ;
 
-0 value startx 0 value starty
+-1 value startx -1 value starty
 : shift-select
     shift? if
         lb-pressed if mouse to starty to startx then
         ms0 1 al_mouse_button_down if
             there tile-selection 2@ swap 2- 1 1 2+ swap tile-selection 8 + 2!
         then
-        lb-letgo if display startx starty al_set_mouse_xy
-            there swap tile-selection 2! then
-    then
-    ms0 1 al_mouse_button_down 0= if
+    else 
         there swap tile-selection 2!
+    then
+    startx 0 >= if
+        lb-letgo if
+            display startx starty al_set_mouse_xy
+            ms0 al_get_mouse_state
+            there swap tile-selection 2!  -1 to startx
+        then
     then
 ;
 
 :while maped step
+    \ startx 0 >= lb-letgo and if (tselect) copy-tiles then
     shift-select
     ms0 1 al_mouse_button_down 0<> shift? not and if
         <SPACE> held  if
@@ -266,6 +278,7 @@ randomize
     ctrl? if
         <c> pressed if (tselect) copy-tiles then
         <e> pressed if (tselect) erase-tiles then
+        <f> pressed if (tselect) fill-tiles then
         <x> pressed if (tselect) cut-tiles then
     then
 ;
@@ -300,11 +313,12 @@ randomize
 ;
 
 :while tiles step
-    shift-select
+    \ startx 0 >= lb-letgo and if mouse-tile tile-selection 8 + 2@ swap pick-tiles then
+    \ shift-select
+    there swap tile-selection 2!
     the-bmp# bmp if
-        ms0 1 al_mouse_button_down if
+        ms0 1 al_mouse_button_down  shift? not and if
             mouse-tile tile-selection 8 + 2@ swap pick-tiles
-            ( 1 1 tile-selection 8 + 2! )
         then
         ms0 2 al_mouse_button_down if
             mouse-tile tile#!
@@ -312,7 +326,7 @@ randomize
     then
 ;
 :while tiles pump
-\    ?changesel
+    ?changesel
 ;
 
 :while attributes update
@@ -368,7 +382,7 @@ randomize
                 al_draw_filled_rectangle
         then ]]
     loop
-    draw-sprites
+    render-sprites
     info if
         2x
         0 viewh 8 - at   zstr[ scrollx . scrolly . ]zstr print 
@@ -448,6 +462,7 @@ randomize
     then
 ;
 :while objed pump
+    objed-ext
     etype ALLEGRO_EVENT_KEY_CHAR = if
         <q> keycode = if prefab# 1 - 255 and to prefab# then
         <w> keycode = if prefab# 1 + 255 and to prefab# then
@@ -499,13 +514,13 @@ randomize
     cr ." e = eraser"
     cr ." 1-4 = select layer"
     cr ." R-click = pick tile"
-    cr ." Shift+up/down/left/right = modify selection (temporary)"
-\    cr ." Shift+Drag = select"
+\    cr ." Shift+up/down/left/right = modify selection (temporary)"
+    cr ." Shift+Drag = select"
     cr ." space+Drag = pan"
     cr ." CTRL+C, CTRL+X = get brush"
     cr ." CTRL+E = erase selection"
-\    cr ." CTRL+F = fill selection with brush"
-\    cr ." h/v = flip brush"
+    cr ." CTRL+F = fill selection with brush"
+    cr ." h/v = flip brush (not fully implemented yet)"
     maped
 ;
 
