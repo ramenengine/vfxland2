@@ -2606,7 +2606,7 @@ extern "C" void * al_create_mixer( int rate, int depth, int conf );
 \ extern "C" al_create_sample( );
 \ extern "C" al_create_sample_instance( );
 \ extern "C" al_create_shader( );
-\ extern "C" al_create_sub_bitmap( );
+extern "C" void * al_create_sub_bitmap( void * bmp, int x, int y, int w, int h );
 \ extern "C" al_create_thread( );
 extern "C" void * al_create_timer( double speed_secs );
 \ extern "C" al_create_vertex_buffer( );
@@ -2693,7 +2693,9 @@ extern "C" void al_draw_multiline_text( void *font,
 \ extern "C" al_draw_rotated_bitmap( );
 \ extern "C" al_draw_rounded_rectangle( );
 \ extern "C" al_draw_scaled_bitmap( );
-\ extern "C" al_draw_scaled_rotated_bitmap( );
+extern "C" void al_draw_scaled_rotated_bitmap ( void *bitmap,
+   float cx, float cy, float dx, float dy, float xscale, float yscale,
+   float angle, int flags );
 \ extern "C" al_draw_soft_line( );
 \ extern "C" al_draw_soft_triangle( );
 \ extern "C" al_draw_spline( );
