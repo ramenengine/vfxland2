@@ -21,16 +21,17 @@ max-prefabs 1024 array sdata  \ static data such as actions
 
 : ;prefab ]] ;
 
-: (method!) create dup , does> @ objtype sdata + ! ;
-: (method) create dup , does> @ objtype sdata + @ execute ;
-: method  (method) (method!) cell+ ;
+32  \ name (1+31)
+value /sdata
+
+: (method!) create /sdata , does> @ objtype sdata + ! ;
+: (method) create /sdata  , does> @ objtype sdata + @ execute ;
+: method  (method) (method!) cell +to /sdata ;
 : ::  ( prefab - <name> )
     prefab [[ :noname ' >body @ objtype sdata + ! ]] ;
 
-32  \ name (1+31)
-    method start start!
-    method think think!
-value /sdata
+method start start!
+method think think!
 
 : become  ( n ) prefab me /objslot move ;
 
@@ -40,10 +41,13 @@ value /sdata
     true to warnings?
 ;
 
+create temp$ 256 allot
+
 : changed  ( - <name> )
-    false to warnings?
-    >in @ ' >body @ swap >in ! bl parse GetPathSpec included
-    true to warnings? ;  
+  \  false to warnings?
+    >in @ ' >body @ swap >in !
+    s" scripts/" temp$ place  bl parse temp$ append  temp$ count GetPathSpec included
+; \    true to warnings? ;  
 
 : load-prefabs
     z" prefabs.iol" ?dup if ?exist if
