@@ -21,15 +21,15 @@ max-prefabs 1024 array sdata  \ static data such as actions
 
 : ;prefab ]] ;
 
-: (vector!) create dup , does> @ objtype sdata + ! ;
-: (vector) create dup , does> @ objtype sdata + @ execute ;
-: vector  (vector) (vector!) cell+ ;
-: ::  ( prefab - <vector> )
+: (method!) create dup , does> @ objtype sdata + ! ;
+: (method) create dup , does> @ objtype sdata + @ execute ;
+: method  (method) (method!) cell+ ;
+: ::  ( prefab - <name> )
     prefab [[ :noname ' >body @ objtype sdata + ! ]] ;
 
 32  \ name (1+31)
-    vector start start!
-    vector think think!   \ temporary
+    method start start!
+    method think think!
 value /sdata
 
 : become  ( n ) prefab me /objslot move ;

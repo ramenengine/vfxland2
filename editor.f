@@ -381,7 +381,8 @@ randomize
             x y iw s>f x f+ ih s>f y f+ hue
                 selected me = if counter 16 and if 1e else 0.5e then else 0.5e then
                 al_draw_filled_rectangle
-            selected me = if x f>s y f>s 8 8 2- at zstr[ me object>i . ]zstr print then
+            info selected me <> and if
+                x f>s y f>s 8 8 2- at zstr[ me object>i . ]zstr print then
         then ]]
     loop
     render-sprites
