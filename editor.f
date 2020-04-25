@@ -10,6 +10,8 @@ require utils.f
 require objlib.f
 require tileutils.f
 
+: ext: postpone \\ ;
+
 \ 0 value tile#
 true value info
 0 value scene#

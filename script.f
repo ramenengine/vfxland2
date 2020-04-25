@@ -4,7 +4,7 @@
     getset objtype objtype!
 to /OBJECT
 
-128 constant /userfields
+/objslot 128 - constant /userfields
 
 max-prefabs /objslot array prefab
 max-prefabs 1024 array sdata  \ static data such as actions
@@ -21,6 +21,9 @@ max-prefabs 1024 array sdata  \ static data such as actions
 
 : ;prefab ]] ;
 
+: ext: /userfields ;
+: ;ext ;
+
 32  \ name (1+31)
 value /sdata
 
@@ -33,9 +36,13 @@ value /sdata
 method start start!
 method think think!
 
-: become  ( n ) prefab me /objslot move ;
+: become  ( n ) >r
+    x y
+    r> prefab me /objslot move
+    y! x! ;
 
 : script  ( n - <name> )
+    dup prefab 's en abort" Prefab # already taken"
     false to warnings?
     include
     true to warnings?
@@ -43,11 +50,13 @@ method think think!
 
 create temp$ 256 allot
 
-: changed  ( - <name> )
-  \  false to warnings?
+: hone  ( - <name> ) me >r
+    false to warnings?
     >in @ ' >body @ swap >in !
     s" scripts/" temp$ place  bl parse temp$ append  temp$ count GetPathSpec included
-; \    true to warnings? ;  
+    true to warnings?
+    r> as
+;  
 
 : load-prefabs
     z" prefabs.iol" ?dup if ?exist if

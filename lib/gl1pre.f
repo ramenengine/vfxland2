@@ -36,6 +36,7 @@ require lib/fclean.f
 : require  get-order depth >R fclean -order require depth R> >
     abort"  Stack item(s) left behind" set-order ;
 
+
 320 value vieww
 240 value viewh
 0 value display
@@ -173,10 +174,10 @@ synonym & addr immediate
     r> >tos ! ;
 : pushes  ( ... stack n - ) swap | s |  0 ?do  s push  loop ;
 : pops    ( stack n - ... ) swap | s |  0 ?do  s pop  loop ;
-: lenof      ' >body cell+ @ 1 + ;
-\ : itemsizeof ' >body @ ;
+: lenof  ' >body cell+ @ 1 + ;
 : array  ( #items itemsize ) create dup , over 1 - , * /allot
          ( i - adr ) does> >r r@ (wrap) r@ @ * r> cell+ cell+ + ;
+
 
 0 value me
 : (fgetter)  ( ofs - <name> ofs ) create dup , does> @ me + sf@ ;
@@ -254,6 +255,7 @@ screen game game
 ;
 
 256 cell array sample
+: smp  sample @ ;
 
 : -bitmap  ?dup if al_destroy_bitmap then ;
 : -sample  ?dup if al_destroy_sample then ;
@@ -277,8 +279,11 @@ screen game game
 0 value sid
 0 value strm
 
-: play  ( sample loopmode - )
-    >r  1e 0e 1e  r>  & sid  al_play_sample ;
+: play  ( sample# - )
+    smp  1e 0e 1e  ALLEGRO_PLAYMODE_ONCE   & sid  al_play_sample ;
+
+: playloop  ( sample# - )
+    smp  1e 0e 1e  ALLEGRO_PLAYMODE_LOOP   & sid  al_play_sample ;
 
 : stream ( zstr loopmode - )
     strm ?dup if al_destroy_audio_stream  0 to strm then
@@ -290,6 +295,8 @@ screen game game
     strm r> al_set_audio_stream_playmode drop
     strm mixer al_attach_audio_stream_to_mixer drop
 ;
+
+: streamloop  ALLEGRO_PLAYMODE_LOOP stream ;
 
 0e fvalue fgr  0e fvalue fgg  0e fvalue fgb  1e fvalue fga
 
@@ -436,7 +443,6 @@ constant /TILEMAP
 ;
 
 \ ---------------------------------------------------------------
-
 dev [if]
     mswin [if] include counter [then]
     
@@ -446,7 +452,6 @@ dev [if]
         
         GetForegroundWindow constant vfx-hwnd
     [then]
-
     
     lenof bitmap 256 array zbmp-file
     lenof bitmap cell array bmp-mtime
@@ -467,3 +472,4 @@ dev [if]
         ( i zstr ) mtime@ swap bmp-mtime !
     ;
 [then]
+
