@@ -80,7 +80,7 @@ constant /SCENE
 ;
 
 : clear-tilemap  ( tilemap -- )
-    [[ tm.base  tm.dims * cells  erase  ]] ;
+    [[ tm.base  tm.rows tm.stride *  erase  ]] ;
 
 : clear-objects  ( -- )
     0 object  [ lenof object /objslot * ]# erase ;

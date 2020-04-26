@@ -85,12 +85,12 @@ create tsel /tilemap /allot     \ describes selection source
         tsel [[ tm.base! ]]
 ;
 
-: pick-tiles ( tile# cols rows )
+: pick-tiles ( tile# )
     the-bmp# bmp 0= if 3drop exit then
     the-bmp# bmp bmpw the-plane 's tm.tw f>s /
         | tcols #rows #cols t# |
-    #cols #rows 2dup tbrush resize-tilemap tsel resize-tilemap
-    #cols 0 do #rows 0 do  i j tcols * + t# + i j tbrush find-tile !
+    #cols #rows tbrush resize-tilemap 
+    #rows 0 do #cols 0 do  i j tcols * + t# + i j tbrush find-tile !
     loop loop 
 ;
 
@@ -190,12 +190,15 @@ randomize
         0e 0e 0e 0.5e al_draw_filled_rectangle ]]
 \    tile#  the-plane
 \        maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
-    tbrush [[
-        the-plane 's tm.bmp# tm.bmp#!
-        the-plane 's tm.tw tm.tw!
-        the-plane 's tm.th tm.th!
-        the-plane [[ maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap ]] xy!
-        draw-as-tilemap ]]    
+    
+    shift? not if
+        tbrush [[
+            the-plane 's tm.bmp# tm.bmp#!
+            the-plane 's tm.tw tm.tw!
+            the-plane 's tm.th tm.th!
+            the-plane [[ maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap ]] xy!
+            draw-as-tilemap ]]    
+    then
 ;
 
 : +sel  ( x y )
@@ -241,6 +244,8 @@ randomize
         lb-pressed if mouse to starty to startx then
         ms0 1 al_mouse_button_down if
             there tile-selection 2@ swap 2- 1 1 2+ swap tile-selection 8 + 2!
+        else
+            there swap tile-selection 2!
         then
     else 
         there swap tile-selection 2!
@@ -256,7 +261,7 @@ randomize
 
 :while maped step
     \ startx 0 >= lb-letgo and if (tselect) copy-tiles then
-    shift-select
+    shift-select  shift? lb-letgo and if tbrush clear-tilemap then
     ms0 1 al_mouse_button_down 0<> shift? not and if
         <SPACE> held  if
             pan
@@ -316,11 +321,13 @@ randomize
 ;
 
 :while tiles step
-    \ startx 0 >= lb-letgo and if mouse-tile tile-selection 8 + 2@ swap pick-tiles then
-    \ shift-select
-    there swap tile-selection 2!
+    shift-select
+    \ there swap tile-selection 2!
     the-bmp# bmp if
-        ms0 1 al_mouse_button_down  shift? not and if
+        shift? lb-letgo and if
+            mouse-tile tile-selection 8 + 2@ swap pick-tiles
+        then
+        ms0 lb-pressed  shift? not and if
             mouse-tile tile-selection 8 + 2@ swap pick-tiles
         then
         ms0 2 al_mouse_button_down if
@@ -329,7 +336,7 @@ randomize
     then
 ;
 :while tiles pump
-    ?changesel
+    \ ?changesel
 ;
 
 :while attributes update
