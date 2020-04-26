@@ -95,7 +95,7 @@ constant /SCENE
 
 : ;scene ]] ;
 
-: iol-path  ( scene ) z" data/" z$ swap 's s.zname z+  +z" .iol" ;
+: iol-path  ( scene ) z" data/levels/" z$ swap 's s.zname z+  +z" .iol" ;
 \ : tad-path  ( layer ) 's l.bmp# zbmp-file zcount 4 - s>z +z" .tad" ;
 
 : load  ( n )
