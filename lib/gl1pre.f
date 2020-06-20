@@ -32,9 +32,24 @@ dev [if]
 \ ------------------------------------------------------------------------
 
 include allegro-5.2.5.f
-require lib/fclean.f
-: require  get-order depth >R fclean -order require depth R> >
+: require  get-order depth >R require depth R> >
     abort"  Stack item(s) left behind" set-order ;
+
+
+
+( ~~ Fixed Point ~~ )
+: p   16 lshift ;           \ $IIIIFFFF
+: /p  $00010000 -rot */ ;
+: p*  $00010000 */ ;
+: p/  $00010000 swap */ ;
+: p>f s>f  65536e f/ ;
+: f>p 65536e f* f>s ;
+: p.  p>f  f. ;
+: p>s 16 arshift ;
+: %   100 /p ;
+: pvalue  value ;
+: pconstant  constant ;
+: pround  p>f fround f>p ;
 
 
 320 value vieww
@@ -152,7 +167,7 @@ variable bud
   also system  assign sfrand to-do RANDOM  previous
 
 synonym rnd choose
-: frnd  65535e f* f>s choose s>f 65535e f/ ;
+
 : ]#  ] postpone literal ;
 synonym | locals| immediate
 synonym /allot allot&erase
@@ -186,10 +201,13 @@ synonym & addr immediate
 : (getter)  ( ofs - <name> ofs ) create dup , does> @ me + @ ;
 : (setter)  ( ofs - <name> ofs ) create dup , does> @ me + ! ;
 : getset  (getter) (setter) cell+ ;
+: pgetset  getset ;
 : field    create over , + does> @ me + ;
+: pfield   field ;
 : third  2 pick ;
 : field[]  ( ofs n size - <name> ofs ) create third , dup , * +
                                         does> 2@ swap ( n ofs size ) rot * + me + ;
+: pfield[]  field[] ;
 : (zgetter)  ( ofs size - <name> ofs size ) create over , does> @ me + ;
 : (zsetter)  ( ofs size - <name> ofs size ) create over , does> @ me + zmove ;
 : zgetset  (zgetter) (zsetter) + ;
@@ -206,8 +224,8 @@ synonym & addr immediate
 \ --------------------------------------------------------------
 
 0
-    fgetset x x!  \ x pos
-    fgetset y y!  \ y pos
+    pgetset x x!  \ x pos
+    pgetset y y!  \ y pos
     getset ix ix!
     getset iy iy! 
     getset attr attr! \ attributes ---- ---- ---- --VH ---- hhhh ---w wwww
@@ -222,7 +240,7 @@ value /OBJECT
 : ih  attr $f00 and 8 rshift 1 + 4 lshift ;
 : flip  attr $3000 and 12 rshift ;
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
-: init-object  0e 0e xy!  1 en! ;
+: init-object  0 0 xy!  1 en! ;
 
 max-objects /objslot array object
 screen game game
@@ -299,23 +317,25 @@ screen game game
 : streamloop  ALLEGRO_PLAYMODE_LOOP stream ;
 
 0e fvalue fgr  0e fvalue fgg  0e fvalue fgb  1e fvalue fga
+: fcolor  ( f: r g b )  to fgb to fgg to fgr ;
+: falpha  ( f: a )  to fga ;
 
-: color  ( f: r g b )  to fgb to fgg to fgr ;
-: alpha  ( f: a )  to fga ;
-\ : backdrop  fgb to bgb fgg to bgg bgr to bgr ;
+2 p value zoom
 
-2e fvalue zoom
 : matrix  create 16 cells allot ;
 matrix m
 
 : draw-as-sprite  ( bitmap# - )
-    bmp ?dup if ix s>f iy s>f iw s>f ih s>f x floor y floor flip al_draw_bitmap_region then
+    bmp ?dup if
+        ix s>f iy s>f iw s>f ih s>f
+        x p>f floor y p>f floor flip al_draw_bitmap_region
+    then
 ;
 
 : draw-sprites ( - )
     1 al_hold_bitmap_drawing
     max-objects 0 do
-        i object to me
+        i object as
         en if bmp# draw-as-sprite then
     loop
     0 al_hold_bitmap_drawing
@@ -323,8 +343,9 @@ matrix m
 
 
 : 2x
+    2 p to zoom
     m al_identity_transform
-    m zoom zoom al_scale_transform
+    m zoom p>f fdup al_scale_transform
     m al_use_transform
 ;
 
@@ -338,23 +359,23 @@ matrix m
 ( -1 or $FFFFFFFF means transparent, i.e. a blank space )
 
 /OBJECT
-    fgetset tm.w tm.w!              \ display box in pixels 
-    fgetset tm.h tm.h!
+    getset tm.w tm.w!              \ display box in pixels 
+    getset tm.h tm.h!
     getset tm.rows tm.rows!         \ total rows and cols in tiles
     getset tm.cols tm.cols!
     getset tm.bmp# tm.bmp#!         \ bitmap index
     getset tm.stride tm.stride!     \ row stride in bytes
     getset tm.base tm.base!         \ address
-    fgetset tm.tw tm.tw!            \ tile size
-    fgetset tm.th tm.th!
-    fgetset tm.scrollx tm.scrollx!  \ scroll coords in pixels
-    fgetset tm.scrolly tm.scrolly!
+    getset tm.tw tm.tw!            \ tile size
+    getset tm.th tm.th!
+    getset tm.scrollx tm.scrollx!  \ scroll coords in pixels
+    getset tm.scrolly tm.scrolly!
 constant /TILEMAP
 
 : init-tilemap
     init-object    
-    16e tm.tw! 16e tm.th!            \ default tile size
-    vieww s>f tm.w! viewh s>f tm.h!  \ default dimensions
+    16 tm.tw! 16 tm.th!            \ default tile size
+    vieww tm.w! viewh tm.h!        \ default dimensions
 ;
 
 : plane:  ( w h - <name> )  \ w and h in tiles and defines the buffer size
@@ -362,73 +383,76 @@ constant /TILEMAP
     init-tilemap
     2dup tm.cols! tm.rows!
     2dup * cells allotment tm.base!
-    over cells tm.stride!
-    s>f tm.th f* viewh s>f fmin tm.h!
-    s>f tm.tw f* vieww s>f fmin tm.w!    
+    drop cells tm.stride!
+    tm.h viewh min tm.h!
+    tm.w vieww min tm.w!    
 ;
 
 : ;plane  ]] ;
  
-0e fvalue ox
-0e fvalue oy
-0e fvalue rx
-0 value tcols
 
-: tm-vrows  tm.h tm.th f/ f>s 1 + ;
-: tm-vcols  tm.w tm.tw f/ f>s 1 + ;
+0 value rx  \ row x
+0 value tcols
+0 value dx
+0 value dy
+
+: tm-vrows  tm.h tm.th / 1 + ;
+: tm-vcols  tm.w tm.tw / 1 + ;
 
 : draw-as-tilemap  ( - )
     tm.bmp# bmp
     0 locals| t b |
     b 0 = if exit then
     tm.base 0 = if exit then
-    b al_get_bitmap_width tm.tw f>s / to tcols
+    b al_get_bitmap_width tm.tw / to tcols
     
     1 al_hold_bitmap_drawing
-    x zoom f* f>s y zoom f* f>s
-        tm.w zoom f* f>s tm.h zoom f* f>s
+    
+    x p>s to dx  y p>s to dy
+    
+    dx zoom p* dy zoom p* 
+    tm.w zoom p* tm.h zoom p* 
         al_set_clipping_rectangle
-    x to ox y to oy
-    x tm.scrollx tm.tw fmod f- x!
-    y tm.scrolly tm.th fmod f- y!
-    x to rx
+               
+    dx tm.scrollx tm.tw mod - to dx
+    dy tm.scrolly tm.th mod - to dy
+    dx to rx
     
     tm.base
-        tm.scrollx tm.tw f/ f>s cells +
-        tm.scrolly tm.th f/ f>s tm.stride * +
+        tm.scrollx tm.tw / cells +
+        tm.scrolly tm.th / tm.stride * +
         
         ( adr )
         tm-vrows 0 do
             dup tm-vcols cells bounds do
                 i @ -1 <> if
-                    b   i @ $ffff and tcols /mod swap s>f tm.tw f* s>f tm.th f*
-                        tm.tw tm.th xy i @ 24 rshift al_draw_bitmap_region
+                    b   i @ $ffff and tcols /mod swap tm.tw * s>f  tm.th * s>f 
+                        tm.tw s>f tm.th s>f
+                        dx s>f dy s>f i @ 24 rshift al_draw_bitmap_region
                 then
-                x tm.tw f+ x!
+                tm.tw +to dx
             cell +loop
             tm.stride +
-            rx x!
-            y tm.th f+ y!
+            rx to dx
+            tm.th +to dy
         loop
         drop
     
-    ox x! oy y!
     0 al_hold_bitmap_drawing
     al_reset_clipping_rectangle
 ;
 
 : pack-tile  ( n flip - )  24 lshift or ;
 
-0e fvalue dx
-0e fvalue dy
 
-: draw-tile ( tile plane f: x y - )
+
+: draw-tile ( tile plane x y - )
     to dy to dx
     [[ locals| t |
         tm.bmp# bmp ?dup if
-            tm.bmp# bmp al_get_bitmap_width tm.tw f>s / to tcols
-            t $ffff and tcols /mod swap s>f tm.tw f* s>f tm.th f*
-            tm.tw tm.th dx dy t 24 rshift al_draw_bitmap_region
+            tm.bmp# bmp al_get_bitmap_width tm.tw / to tcols
+            t $ffff and tcols /mod swap tm.tw * s>f  tm.th * s>f 
+            tm.tw s>f  tm.th s>f  dx s>f  dy s>f  t 24 rshift al_draw_bitmap_region
         then
     ]]
 ;
@@ -439,7 +463,7 @@ constant /TILEMAP
 \ ---------------------------------------------------------------
 
 :while game update
-    2x 0e 0e 0e color cls draw-sprites
+    2x 0e 0e 0e 1e fcolor cls draw-sprites
 ;
 
 \ ---------------------------------------------------------------

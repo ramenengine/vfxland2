@@ -11,6 +11,8 @@ require objlib.f
 require tileutils.f
 
 : ext: postpone \\ ;
+: frnd  65535e f* f>s choose s>f 65535e f/ ;
+
 
 \ 0 value tile#
 true value info
@@ -46,8 +48,8 @@ screen objsel
 create tsel /tilemap /allot     \ describes selection source
 0 value tsel-plane#             \ index of the background plane where the selection is
 
-: black  0e 0e 0e color 1e alpha ;
-: grey   0.5e 0.5e 0.5e color 1e alpha ;
+: black  0e 0e 0e fcolor 1e falpha ;
+: grey   0.5e 0.5e 0.5e fcolor 1e falpha ;
 : keycode alevt KEYBOARD_EVENT.keycode @ ;
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
 : lb-pressed ms1 1 al_mouse_button_down 0= ms0 1 al_mouse_button_down 0<> and ;
@@ -68,15 +70,15 @@ create tsel /tilemap /allot     \ describes selection source
 \        fmouse >v zoom uv/ the-plane 's scrollxy v+
 \        tm.twh v/ vtrunc tm.twh v* scrollxy v- v>
 
-: maus  mouse zoom f>s / swap zoom f>s / swap scrollx scrolly 2+ ;
-: colrow  the-plane [[ fswap tm.tw f/ ftrunc fswap tm.th f/ ftrunc ]] ;
-: tilexy  the-plane [[ fswap tm.tw f* fswap tm.th f* ]] ;
-: scroll-  fswap scrollx s>f f- fswap scrolly s>f f- ;
+: maus  mouse zoom p/ swap zoom p/ swap scrollx scrolly 2+ ;
+: colrow  the-plane [[ swap tm.tw / swap tm.th / ]] ;
+: tilexy  the-plane [[ swap tm.tw * swap tm.th * ]] ;
+: scroll-  swap scrollx - swap scrolly - ;
 
 : resize-tilemap ( cols rows tilemap )
     [[ 2dup tm.rows! tm.cols!
     the-plane [[ tm.tw tm.th ]] tm.th! tm.tw! 
-    s>f tm.th f* tm.h!  s>f tm.tw f* tm.w! ]] ;
+    tm.th * tm.h!  tm.tw * tm.w! ]] ;
 
 : select-tiles ( col row cols rows )
     tsel-plane# bgp tsel /tilemap move
@@ -87,7 +89,7 @@ create tsel /tilemap /allot     \ describes selection source
 
 : pick-tiles ( tile# )
     the-bmp# bmp 0= if 3drop exit then
-    the-bmp# bmp bmpw the-plane 's tm.tw f>s /
+    the-bmp# bmp bmpw the-plane 's tm.tw /
         | tcols #rows #cols t# |
     #cols #rows tbrush resize-tilemap 
     #rows 0 do #cols 0 do  i j tcols * + t# + i j tbrush find-tile !
@@ -103,7 +105,7 @@ create tsel /tilemap /allot     \ describes selection source
     tsel [[ tm.cols tm.rows ]] tbrush resize-tilemap
     tsel tbrush 0 0 tmove
 ;
-: there  maus 2s>f colrow f>s f>s swap ;
+: there  maus colrow ;
 : paste-tiles  tbrush the-plane there tmove ;
 : erase-tiles
     there the-plane find-tile
@@ -122,8 +124,8 @@ create tsel /tilemap /allot     \ describes selection source
         4 0 do i s.layer [[
             l.zstm @ if l.zstm zcount FileExist? not if
                 cr ." Auto-creating " l.zstm count type
-                the-scene 's s.w l.tw f/ f>s
-                the-scene 's s.h l.th f/ f>s l.zstm create-stm
+                the-scene 's s.w l.tw / 
+                the-scene 's s.h l.th / l.zstm create-stm
             then then
         ]] loop
     ]]
@@ -184,9 +186,11 @@ randomize
 : selw*  tile-selection 2 cells + @ * ;
 : selh*  tile-selection 3 cells + @ * ;
         
-: draw-cursor
+: 2p p swap p swap ;
+: draw-cursor  
     the-plane [[ 
-        tile-selection 2@ swap 2s>f tilexy scroll- fover tm.tw f>s selw* s>f f+ fover tm.th f>s selh* s>f f+
+        tile-selection 2@ swap tilexy scroll- over s>f dup s>f
+        swap tm.tw selw* + s>f  tm.th selh* + s>f
         0e 0e 0e 0.5e al_draw_filled_rectangle ]]
 \    tile#  the-plane
 \        maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap draw-tile
@@ -196,7 +200,7 @@ randomize
             the-plane 's tm.bmp# tm.bmp#!
             the-plane 's tm.tw tm.tw!
             the-plane 's tm.th tm.th!
-            the-plane [[ maus 2s>f colrow tilexy scroll- 1e f- fswap 1e f- fswap ]] xy!
+            the-plane [[ maus colrow tilexy scroll- 1 1 2- ]] 2p xy!
             draw-as-tilemap ]]    
     then
 ;
@@ -205,23 +209,25 @@ randomize
     swap tile-selection 8 + 2@ 2+ 1 max 128 min swap 1 max 128 min swap tile-selection 8 + 2! ;
                 
 
-: tw  the-plane 's tm.tw f>s ;
-: th  the-plane 's tm.th f>s ;
+: tw  the-plane 's tm.tw ;
+: th  the-plane 's tm.th ;
 
 : ?refresh
     the-bmp# zbmp-file mtime@ the-bmp# bmp-mtime @ > if 50 ms load-data then
 ;
 
 : pan
-    walt scrolly swap 2 / - 0 max the-scene 's s.h f>s viewh - min scrolly!
-         scrollx swap 2 / - 0 max the-scene 's s.w f>s vieww - min scrollx!
+    walt scrolly swap 2 / - 0 max the-scene 's s.h viewh - min scrolly!
+         scrollx swap 2 / - 0 max the-scene 's s.w vieww - min scrollx!
 ;
 
-: draw-plane  [[ scrollx s>f tm.scrollx! s>f scrolly tm.scrolly! draw-as-tilemap ]] ;
+: draw-plane  ( plane - ) 
+    [[ scrollx tm.scrollx! scrolly tm.scrolly! draw-as-tilemap ]] ;
 
-: draw-parallax dup the-scene 's s.layer >r
-    bgp [[ scrollx s>f r@ 's l.parax f* tm.scrollx!
-           scrolly s>f r> 's l.paray f* tm.scrolly! draw-as-tilemap ]]
+: draw-parallax ( plane - )
+    dup the-scene 's s.layer >r
+    bgp [[ scrollx r@ 's l.parax p* tm.scrollx!
+           scrolly r> 's l.paray p* tm.scrolly! draw-as-tilemap ]]
 ;
 
 
@@ -306,8 +312,8 @@ randomize
 \    ?changesel
 ;
 
-: tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw f>s / ]] ; 
-: mouse-tile  the-plane [[ mouse 2 / tm.th f>s / tcols *   swap 2 / tm.tw f>s /   + ]] ;
+: tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw / ]] ; 
+: mouse-tile  the-plane [[ mouse 2 / tm.th / tcols *   swap 2 / tm.tw /   + ]] ;
 
 :while tiles update
     2x black cls
@@ -350,10 +356,11 @@ randomize
         tm.bmp# bmp bmph 0 do
             tm.bmp# bmp bmpw 0 do
                 dup tm.bmp# tileflags
-                if i s>f j s>f fover tm.tw f+ fover tm.th f+ 0e 1e 1e 0.5e al_draw_filled_rectangle then
+                if  i s>f j s>f   i tm.tw + s>f  j tm.th + s>f
+                    0e 1e 1e 0.5e al_draw_filled_rectangle then
                 1 +
-            tm.tw f>s +loop
-        tm.th f>s +loop
+            tm.tw +loop
+        tm.th +loop
         drop
     ]]
 ;
@@ -382,16 +389,18 @@ randomize
     0 draw-parallax
     1 draw-parallax
     
-    m scrollx negate s>f zoom f* scrolly negate s>f zoom f* al_translate_transform
+    m scrollx negate zoom p* s>f  scrolly negate zoom p* s>f  al_translate_transform
     m al_use_transform
     max-objects 0 do
         i object [[ en if
             id RandSeed !
-            x y iw s>f x f+ ih s>f y f+ hue
+            
+            x p>f y p>f  x iw p + p>f  y ih p + p>f  
+                hue
                 selected me = if counter 16 and if 1e else 0.5e then else 0.5e then
                 al_draw_filled_rectangle
             info selected me <> and if
-                x f>s y f>s 8 8 2- at zstr[ me object>i . ]zstr print then
+                x p>s y p>s 8 8 2- at zstr[ me object>i . ]zstr print then
         then ]]
     loop
     render-sprites
@@ -404,8 +413,8 @@ randomize
 
 : ?snap ( obj )
     [[ snapping if
-        x the-plane 's tm.tw 2e f/ f/ fround the-plane 's tm.tw 2e f/ f* x!
-        y the-plane 's tm.th 2e f/ f/ fround the-plane 's tm.th 2e f/ f* y!
+        x the-plane 's tm.tw 2 / / pround the-plane 's tm.tw 2 / * x!
+        y the-plane 's tm.th 2 / / pround the-plane 's tm.th 2 / * y!
     then ]]
 ;
 
@@ -415,7 +424,7 @@ randomize
     dragging if
         ms0 1 al_mouse_button_down selected 0<> and
             selected hovered = and if
-            selected [[ walt s>f 2e f/ y f+ y! s>f 2e f/ x f+ x! ]]
+            selected [[ walt 2 / p  y + y!  2 / p x + x! ]]
         then
         ms0 1 al_mouse_button_down 0= if
             false to dragging
@@ -425,8 +434,8 @@ randomize
         0 to hovered
         max-objects 0 do
             i object [[ en if
-                mx x f>s >= my y f>s >= and
-                mx x f>s iw + <= and my y f>s ih + <= and if
+                mx x p>s >= my y p>s >= and
+                mx x p>s iw + <= and my y p>s ih + <= and if
                     me to hovered
                     ms0 1 al_mouse_button_down if
                         me to selected
@@ -484,11 +493,12 @@ randomize
 : 1x      m al_identity_transform      m al_use_transform ;
 
 :while objsel update
-    1x 0e 0e 1e color cls
+    1x 0e 0e fcolor 1e falpha cls
 \    m scrollx negate s>f scrolly negate s>f al_translate_transform
     prefab# prefab [[ en if
         counter 16 and if
-            x 1e f- y 1e f- iw s>f x f+ 1e f+ ih s>f y f+ 1e f+
+            x p>f 1e f-  y p>f 1e f-
+                iw s>f x p>f f+ 1e f+ ih s>f y p>f f+ 1e f+
                 1e 0e 0e 1e al_draw_filled_rectangle
         then
     then ]]

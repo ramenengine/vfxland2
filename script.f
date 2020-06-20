@@ -15,7 +15,7 @@ max-prefabs 1024 array sdata  \ static data such as actions
     dup constant dup prefab [[
     dup >r lastword r> sdata place
     dup objtype!
-        16 * s>f fdup xy!  \ default positioning; can be changed using the prefabs.iol file
+        16 * p dup xy!  \ default positioning; can be changed using the prefabs.iol file
     true en!
 ;
 

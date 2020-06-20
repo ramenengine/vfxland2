@@ -6,7 +6,7 @@ require utils.f
     max-objects 0 do
         i object [[ en not if
             become nextid id! 1 +to nextid
-            at@ 2s>f xy!
+            at@ xy!
         me ]] unloop exit then
         ]] 
     loop -1 abort" Out of object mem."

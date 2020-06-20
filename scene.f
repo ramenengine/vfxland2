@@ -1,3 +1,4 @@
+
 require lib/filelib.f
 require utils.f
 require lib/a.f
@@ -21,28 +22,28 @@ create tiledata /tileattrs lenof bitmap * /allot
 0
     64 zgetset l.zstm l.zstm!       \ tilemap path
     64 zgetset l.zbmp l.zbmp!       \ tile bitmap path
-    fgetset l.parax l.parax!
-    fgetset l.paray l.paray!
-    fgetset l.tw l.tw!              \ tile size
-    fgetset l.th l.th!
-    fgetset l.scrollx l.scrollx!    \ initial scroll coords in pixels
-    fgetset l.scrolly l.scrolly!
+    pgetset l.parax l.parax!
+    pgetset l.paray l.paray!
+    getset l.tw l.tw!              \ tile size
+    getset l.th l.th!
+    getset l.scrollx l.scrollx!    \ initial scroll coords in pixels
+    getset l.scrolly l.scrolly!
     getset l.bmp# l.bmp#!
 constant /LAYER
 
 \ internal scene struct
 0
     32 zgetset s.zname s.zname!
-    fgetset s.w s.w!      \ bounds
-    fgetset s.h s.h!
+    getset s.w s.w!      \ bounds
+    getset s.h s.h!
     4 /layer field[] s.layer
 constant /SCENE
 
 256 /scene array scene
 64 1024 cells array tiledata  \ attribute data (64 tilesets supported)
 
-: init-layer  16e fdup l.th! l.tw! 1e fdup l.paray! l.parax!
-    0e fdup l.scrolly! l.scrollx! ;
+: init-layer  16 l.tw! 16 l.th!  1 p l.parax! 1 p l.paray!
+    0 l.scrollx! 0 l.scrolly! ;
 
 : ?exist
     dup zcount file-exists not if cr zcount type ."  not found" 0 else 1 then
@@ -89,7 +90,7 @@ constant /SCENE
     >in @ >r
     dup constant scene [[
     r> >in ! bl parse s>z s.zname!
-    [ bgp1 's tm.cols 16 * ]# s>f fdup s.w! s.h!
+    [ bgp1 's tm.cols 16 * ]# dup s.w! s.h!
     4 0 do i s.layer [[ init-layer ]] loop
 ;
 
@@ -126,8 +127,9 @@ constant /SCENE
     [ lenof scene ]# 0 do
         i scene [[ s.zname zcount ?dup if
             cr ." #" i 3 .r ."  --- " type ."  --- " 
-            s.w f>s . ." x " s.h f>s .
+            s.w . ." x " s.h .
             else drop then
         ]]
     loop cr 
 ;
+

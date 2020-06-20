@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Komodo Project File - DO NOT EDIT -->
-<project id="6f44dd9c-9662-4901-aa23-e1eb38056e6a" kpf_version="5" name="vfxland.komodoproject">
+<project id="6f44dd9c-9662-4901-aa23-e1eb38056e6a" kpf_version="5" name="vfxland2.komodoproject">
 <preference-set idref="6f44dd9c-9662-4901-aa23-e1eb38056e6a" id="project" preftype="project">
   <string relative="path" id="import_dirname"></string>
   <string id="import_exclude_matches">*.*~;*.bak;*.tmp;CVS;.#*;*.pyo;*.pyc;.svn;_svn;.git;.hg;.bzr;*%25*;tmp*.html;.DS_Store;*.swp;*.kpf;*.komodoproject;.komodotools;__pycache__;*.dll</string>

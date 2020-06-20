@@ -15,7 +15,7 @@
 :while game step
     max-objects 0 do
         i object [[ en if
-            think  x vx f+ x!  y vy f+ y!
-        then ]]        
+            think  x vx + x!  y vy + y!
+        then ]]
     loop
 ;
