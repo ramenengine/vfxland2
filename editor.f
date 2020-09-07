@@ -1,5 +1,8 @@
-empty only forth definitions
-include lib/gl1pre.f
+include lib/fixed.f
+include lib/roger.f
+include lib/stackarray.f
+include lib/game.f
+
 require keys.f
 require input.f
 require lib/strout.f
@@ -9,6 +12,7 @@ require script.f
 require utils.f
 require objlib.f
 require tileutils.f
+require lib/undo.f
 
 : ext: postpone \\ ;
 : frnd  65535e f* f>s choose s>f 65535e f/ ;
@@ -41,19 +45,21 @@ to /screen
 screen maped
 screen tiles
 screen attributes
-screen objed
+screen objed 
 screen objsel
 
 256 256 plane: tbrush ;plane    \ clipboard tilemap
 create tsel /tilemap /allot     \ describes selection source
 0 value tsel-plane#             \ index of the background plane where the selection is
 
+
+
 : black  0e 0e 0e fcolor 1e falpha ;
 : grey   0.5e 0.5e 0.5e fcolor 1e falpha ;
 : keycode alevt KEYBOARD_EVENT.keycode @ ;
 : bmpwh dup al_get_bitmap_width swap al_get_bitmap_height ;
 : lb-pressed ms1 1 al_mouse_button_down 0= ms0 1 al_mouse_button_down 0<> and ;
-: lb-letgo  ms1 1 al_mouse_button_down 0<> ms0 1 al_mouse_button_down 0= and ;
+: lb-letgo  ms1 1 al_mouse_button_down 0<> ms0 1 al_mouse_button_down 0= and ; 
 
 : the-scene  scene# scene ;
 : the-layer  scene# scene [[ layer# s.layer ]] ;
@@ -72,8 +78,31 @@ create tsel /tilemap /allot     \ describes selection source
 
 : maus  mouse zoom p/ swap zoom p/ swap scrollx scrolly 2+ ;
 : colrow  the-plane [[ swap tm.tw / swap tm.th / ]] ;
+: there  maus colrow ;
 : tilexy  the-plane [[ swap tm.tw * swap tm.th * ]] ;
 : scroll-  swap scrollx - swap scrolly - ;
+: the-tile   there the-plane find-tile ; 
+
+: cta  \ Cover Tristan's Ass: add undo history for the area under the selection
+    tbrush [[ tm.dims * 1 = if
+        the-tile cell snapshot
+    else
+        the-tile  the-plane 's tm.stride tm.rows *  tm.cols cells +  snapshot
+    then ]]
+;
+
+: ctt  \ Cover Tristan's Tuchus: add undo history for the entire layer
+    the-plane [[ tm.base  tm.stride tm.rows * ]] snapshot 
+;
+
+: ctr  \ Cover Tristan's Rear: add undo history of the object list
+    0 object [ lenof object /objslot * ]# snapshot
+;
+
+: ctd  \ Cover Tristan's Derier: add undo history for the selected object
+    selected ?dup if /objslot snapshot then
+;
+
 
 : resize-tilemap ( cols rows tilemap )
     [[ 2dup tm.rows! tm.cols!
@@ -88,8 +117,8 @@ create tsel /tilemap /allot     \ describes selection source
 ;
 
 : pick-tiles ( tile# )
-    the-bmp# bmp 0= if 3drop exit then
-    the-bmp# bmp bmpw the-plane 's tm.tw /
+    the-bmp# bitmap @ 0= if 3drop exit then
+    the-bmp# bitmap @ bmpw the-plane 's tm.tw /
         | tcols #rows #cols t# |
     #cols #rows tbrush resize-tilemap 
     #rows 0 do #cols 0 do  i j tcols * + t# + i j tbrush find-tile !
@@ -105,14 +134,16 @@ create tsel /tilemap /allot     \ describes selection source
     tsel [[ tm.cols tm.rows ]] tbrush resize-tilemap
     tsel tbrush 0 0 tmove
 ;
-: there  maus colrow ;
-: paste-tiles  tbrush the-plane there tmove ;
+
+
+: paste-tiles
+    tbrush the-plane there tmove ;
 : erase-tiles
-    there the-plane find-tile
+    the-tile
         tsel [[ tm.cols cells tm.rows ]] the-plane 's tm.stride 2erase ;
 : cut-tiles   copy-tiles erase-tiles ;
 : fill-tiles 
-    there the-plane find-tile
+    the-tile
         tsel [[ tm.cols cells tm.rows ]] the-plane 's tm.stride tile# 2tfill ;
     
 
@@ -141,6 +172,7 @@ create tsel /tilemap /allot     \ describes selection source
     the-layer   [[ l.tw l.th l.bmp# ]]
     the-plane   [[ tm.bmp#! tm.th! tm.tw! ]]
     
+    clear-history
 ;
 
 : load-data
@@ -166,7 +198,7 @@ create tsel /tilemap /allot     \ describes selection source
                         tm.base tm.stride tm.rows * write
                     ]]
                 ]file
-\                l.bmp# bmp if
+\                l.bmp# bitmap @ if
 \                    my tad-path newfile[
 \                        0 l.bmp# tileattrs /tileattrs write
 \                    ]file
@@ -291,9 +323,10 @@ randomize
     then
     ctrl? if
         <c> pressed if (tselect) copy-tiles then
-        <e> pressed if (tselect) erase-tiles then
+        <e> pressed if cta  (tselect) erase-tiles then
 \        <f> pressed if (tselect) fill-tiles then
-        <x> pressed if (tselect) cut-tiles then
+        <x> pressed if cta  (tselect) cut-tiles then
+        <z> pressed if undo then
     then
 ;
 
@@ -308,18 +341,26 @@ randomize
     then
 ;
 
+: startpaint?
+    etype ALLEGRO_EVENT_MOUSE_BUTTON_DOWN = shift? not and
+    <SPACE> held not and ;
+
 :while maped pump
+    startpaint? if
+        ctt
+    then
+
 \    ?changesel
 ;
 
-: tcols  the-plane [[ tm.bmp# bmp bmpw tm.tw / ]] ; 
+: tcols  the-plane [[ tm.bmp# bitmap @ bmpw tm.tw / ]] ; 
 : mouse-tile  the-plane [[ mouse 2 / tm.th / tcols *   swap 2 / tm.tw /   + ]] ;
 
 :while tiles update
     2x black cls
-    0e 0e the-bmp# bmp bmpwh swap s>f s>f
+    0e 0e the-bmp# bitmap @ bmpwh swap s>f s>f
         1e 0e 1e 1e al_draw_filled_rectangle
-    the-bmp# bmp 0e 0e 0 al_draw_bitmap
+    the-bmp# bitmap @ 0e 0e 0 al_draw_bitmap
     draw-cursor
     info if
         0 viewh 8 - at   zstr[ mouse-tile . ]zstr print
@@ -329,7 +370,7 @@ randomize
 :while tiles step
     shift-select
     \ there swap tile-selection 2!
-    the-bmp# bmp if
+    the-bmp# bitmap @ if
         shift? lb-letgo and if
             mouse-tile tile-selection 8 + 2@ swap pick-tiles
         then
@@ -347,14 +388,14 @@ randomize
 
 :while attributes update
     2x black cls
-    0e 0e the-bmp# bmp bmpwh swap s>f s>f
+    0e 0e the-bmp# bitmap @ bmpwh swap s>f s>f
         1e 0e 1e 1e al_draw_filled_rectangle
     the-bmp# 0= if exit then
-    the-bmp# bmp 0e 0e 0 al_draw_bitmap
+    the-bmp# bitmap @ 0e 0e 0 al_draw_bitmap
     the-plane [[
         0
-        tm.bmp# bmp bmph 0 do
-            tm.bmp# bmp bmpw 0 do
+        tm.bmp# bitmap @ bmph 0 do
+            tm.bmp# bitmap @ bmpw 0 do
                 dup tm.bmp# tileflags
                 if  i s>f j s>f   i tm.tw + s>f  j tm.th + s>f
                     0e 1e 1e 0.5e al_draw_filled_rectangle then
@@ -369,12 +410,16 @@ randomize
 
 :while attributes step
     the-bmp# 0= if exit then
-    mouse 2 / the-bmp# bmp bmph < swap 2 / the-bmp# bmp bmpw < and if
+    mouse 2 / the-bmp# bitmap @ bmph < swap 2 / the-bmp# bitmap @ bmpw < and if
         ms0 1 al_mouse_button_down if
-            the-plane [[ mouse-tile tm.bmp# 2dup tileflags 1 or -rot tileflags! ]]
+            the-plane [[
+                mouse-tile tm.bmp# 2dup tileflags 1 or -rot tileflags!
+            ]]
         then
         ms0 2 al_mouse_button_down if
-            the-plane [[ mouse-tile tm.bmp# 2dup tileflags 1 nand -rot tileflags! ]]
+            the-plane [[
+                mouse-tile tm.bmp# 2dup tileflags 1 nand -rot tileflags!
+            ]]
         then
     then
 ;
@@ -440,6 +485,7 @@ randomize
                     ms0 1 al_mouse_button_down if
                         me to selected
                         true to dragging
+                        ctr
                     then
                     ms0 2 al_mouse_button_down if
                         objtype to prefab#
@@ -473,14 +519,18 @@ randomize
     \ then
     
     <a> pressed ctrl? and if
+        ctr
         maus at prefab# one-object to selected
         selected ?snap
     then
     
     <del> pressed if
+        ctr
         selected 's en if selected dismiss then
         0 to selected
     then
+    
+    <z> pressed ctrl? and if undo then
 ;
 :while objed pump
     objed-ext
@@ -525,14 +575,16 @@ randomize
 \    <s> pressed ctrl? not and if snapping not to snapping then
 ;
 
-: init-game
+: init-game    
     cr
     cr ." F1     F2     F3     F4     F5     F6     F7     F8     F9    F10    F11    F12    "
     cr ." MAPED  TILES  OBJED         RELOAD               "
-    cr ." Ctrl+S = Save everything "
+    cr 
+    cr ." CTRL+S = Save everything "
     cr ." i = toggle info "
     cr
     cr ." --== MAP ==-- "
+    cr ." CTRL+Z = U.F.U. (Unlimited Freaking Undo) (WARNING No Takebacks!) "
     cr ." e = eraser"
     cr ." 1-4 = select layer"
     cr ." R-click = pick tile"
@@ -546,7 +598,7 @@ randomize
     maped
 ;
 
-include lib/gl1post
+include lib/go.f
 
 export? [if] turnkey editor [then]  \ turnkey (save) breaks reloading
 init

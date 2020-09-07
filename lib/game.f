@@ -3,11 +3,13 @@ finit
 [undefined] /objslot    [if] 256 constant /objslot [then] 
 
 \ ------------------------------------------------------------------------
+\ Configuration
 
 0 value dev
 0 value fullscreen
 0 value mswin
 0 value export?
+0 value doublebuf?
 
 :noname
     CommandLine 2drop
@@ -17,11 +19,10 @@ finit
             2dup s" -fullscreen" compare 0= fullscreen or to fullscreen 
             2dup s" -mswin" compare 0= mswin or to mswin
             2dup s" -export" compare 0= export? or to export?
+            2dup s" -doublebuf" compare 0= doublebuf? or to doublebuf?
         2drop 
     loop
 ; execute
-
-\ ------------------------------------------------------------------------
 
 dev [if]
     synonym turnkey SaveConsole
@@ -32,24 +33,9 @@ dev [if]
 \ ------------------------------------------------------------------------
 
 include allegro-5.2.5.f
+
 : require  get-order depth >R require depth R> >
     abort"  Stack item(s) left behind" set-order ;
-
-
-
-( ~~ Fixed Point ~~ )
-: p   16 lshift ;           \ $IIIIFFFF
-: /p  $00010000 -rot */ ;
-: p*  $00010000 */ ;
-: p/  $00010000 swap */ ;
-: p>f s>f  65536e f/ ;
-: f>p 65536e f* f>s ;
-: p.  p>f  f. ;
-: p>s 16 arshift ;
-: %   100 /p ;
-: pvalue  value ;
-: pconstant  constant ;
-: pround  p>f fround f>p ;
 
 
 320 value vieww
@@ -70,6 +56,24 @@ create alevt 256 allot&erase
 0 value mousey
 0 value mwheelx
 0 value mwheely
+
+128 cell array bitmap
+256 cell array sample
+max-objects /objslot array object
+
+0e fvalue fgr
+0e fvalue fgg
+0e fvalue fgb
+1e fvalue fga
+
+2 p value zoom
+
+: matrix  create 16 cells allot ;
+matrix m
+
+0 value sid
+0 value strm
+
 
 : load-data ;
 : init-game ;
@@ -129,8 +133,10 @@ value /screen
     al_install_mouse check
     al_install_touch_input check
     ALLEGRO_VSYNC 1 2 al_set_new_display_option
-    ALLEGRO_SINGLE_BUFFER 1 2 al_set_new_display_option     \ gets us one less
-                                                            \ frame of input lag
+    [undefined] doublebuf? [if]
+        \ gets us one less frame of input lag
+        ALLEGRO_SINGLE_BUFFER 1 2 al_set_new_display_option
+    [then]
     
     [ fullscreen ] [if]
         \ ALLEGRO_FULLSCREEN_WINDOW al_set_new_display_flags
@@ -152,47 +158,11 @@ value /screen
     ALLEGRO_ADD ALLEGRO_ALPHA ALLEGRO_INVERSE_ALPHA al_set_blender
 ;
 
-( -------------------------------------------------------------- )
-
 : etype  ( - ALLEGRO_EVENT_TYPE )  alevt ALLEGRO_EVENT.type @ ;
 : keycode  alevt KEYBOARD_EVENT.keycode @ ;
 : unichar  alevt KEYBOARD_EVENT.unichar @ ;
-
+    
 \ --------------------------------------------------------------
-
-variable bud
-
-
-: sfrand randseed @  3141592621 *  1+  DUP randseed ! ;
-  also system  assign sfrand to-do RANDOM  previous
-
-synonym rnd choose
-
-: ]#  ] postpone literal ;
-synonym | locals| immediate
-synonym /allot allot&erase
-: allotment  here >r /allot r> ;
-synonym gild freeze
-synonym & addr immediate
-
-( --== circular stack ==-- )
-( expects length to be power of 2 )
-: stack  ( length - <name> ) create 0 , dup 1 - ,  cells /allot ;
-: (wrap)  cell+ @ and ;
-: >tos  dup @ cells swap cell+ cell+ + ;
-: >nos  dup @ 1 - over (wrap) cells swap cell+ cell+ + ;
-: pop  ( stack - val )
-    dup >r >tos @
-    r@ @ 1 - r@ (wrap) r> ! ;
-: push  ( val stack - )
-    dup >r  @ 1 + r@ (wrap) r@ !
-    r> >tos ! ;
-: pushes  ( ... stack n - ) swap | s |  0 ?do  s push  loop ;
-: pops    ( stack n - ... ) swap | s |  0 ?do  s pop  loop ;
-: lenof  ' >body cell+ @ 1 + ;
-: array  ( #items itemsize ) create dup , over 1 - , * /allot
-         ( i - adr ) does> >r r@ (wrap) r@ @ * r> cell+ cell+ + ;
-
 
 0 value me
 : (fgetter)  ( ofs - <name> ofs ) create dup , does> @ me + sf@ ;
@@ -206,7 +176,7 @@ synonym & addr immediate
 : pfield   field ;
 : third  2 pick ;
 : field[]  ( ofs n size - <name> ofs ) create third , dup , * +
-                                        does> 2@ swap ( n ofs size ) rot * + me + ;
+    does> 2@ swap ( n ofs size ) rot * + me + ;
 : pfield[]  field[] ;
 : (zgetter)  ( ofs size - <name> ofs size ) create over , does> @ me + ;
 : (zsetter)  ( ofs size - <name> ofs size ) create over , does> @ me + zmove ;
@@ -220,8 +190,7 @@ synonym & addr immediate
     state @ if  s" me >r to me" evaluate bl parse evaluate s" r> to me" evaluate exit then   
     s" [[" evaluate bl parse evaluate s" ]]" evaluate ; immediate
     
-    
-\ --------------------------------------------------------------
+\ --------------------------------------------------------------    
 
 0
     pgetset x x!  \ x pos
@@ -242,19 +211,17 @@ value /OBJECT
 : flip! 12 lshift attr [ $3000 invert ]# and or attr! ;
 : init-object  0 0 xy!  1 en! ;
 
-max-objects /objslot array object
-screen game game
+screen game
+game
 0 object to me
 
-: object>i  0 object - /objslot / ;
+: object>i  ( adr - n )
+    0 object - /objslot / ;
 
-: btn  kbs0 swap al_key_down ;
+: button  ( n - n )
+    kbs0 swap al_key_down ;
 
-128 cell array bitmap
-: bmp  bitmap @ ;
-: bmp! bitmap ! ;
-
-: ?LOADBMP  ( var zstr )
+: ?loadbmp  ( var zstr )
     dup 0= if swap ! exit then
     dup zcount FileExist? if        
         over @ ?dup if al_destroy_bitmap then
@@ -263,7 +230,7 @@ screen game game
     else drop drop then
 ;
 
-: ?LOADSMP  ( var zstr )
+: ?loadsmp  ( var zstr )
     dup 0= if swap ! exit then
     dup zcount FileExist? if
         over @ ?dup if al_destroy_sample then
@@ -272,36 +239,34 @@ screen game game
     else drop drop then
 ;
 
-256 cell array sample
-: smp  sample @ ;
+: -bitmap  ( ALLEGRO_BITMAP - )
+    ?dup if al_destroy_bitmap then ;
+    
+: -sample  ( ALLEGRO_SAMPLE - )
+    ?dup if al_destroy_sample then ;
 
-: -bitmap  ?dup if al_destroy_bitmap then ;
-: -sample  ?dup if al_destroy_sample then ;
+: destroy-bitmaps  ( - )
+    [ lenof bitmap ]# 0 do i bitmap @ -bitmap loop ;
 
-: destroy-bitmaps
-    [ lenof bitmap ]# 0 do i bitmap @ -bitmap loop
-;
+: destroy-samples  ( - )
+    [ lenof sample ]# 0 do i sample @ -sample loop ;
 
-: destroy-samples
-    [ lenof sample ]# 0 do i sample @ -sample loop
-;
-
-: deinit
+: deinit  ( - ) 
     destroy-bitmaps
     destroy-samples
 ;
 
-: load-bitmap  ( n zpath - ) swap bitmap swap ?loadbmp ;
-: load-sample  ( n zpath - ) swap sample swap ?loadsmp ;
-
-0 value sid
-0 value strm
+: load-bitmap  ( n zpath - )
+    swap bitmap swap ?loadbmp ;
+    
+: load-sample  ( n zpath - )
+    swap sample swap ?loadsmp ;
 
 : play  ( sample# - )
-    smp  1e 0e 1e  ALLEGRO_PLAYMODE_ONCE   & sid  al_play_sample ;
+    sample @  1e 0e 1e  ALLEGRO_PLAYMODE_ONCE   & sid  al_play_sample ;
 
 : playloop  ( sample# - )
-    smp  1e 0e 1e  ALLEGRO_PLAYMODE_LOOP   & sid  al_play_sample ;
+    sample @  1e 0e 1e  ALLEGRO_PLAYMODE_LOOP   & sid  al_play_sample ;
 
 : stream ( zstr loopmode - )
     strm ?dup if al_destroy_audio_stream  0 to strm then
@@ -316,17 +281,11 @@ screen game game
 
 : streamloop  ALLEGRO_PLAYMODE_LOOP stream ;
 
-0e fvalue fgr  0e fvalue fgg  0e fvalue fgb  1e fvalue fga
 : fcolor  ( f: r g b )  to fgb to fgg to fgr ;
 : falpha  ( f: a )  to fga ;
 
-2 p value zoom
-
-: matrix  create 16 cells allot ;
-matrix m
-
 : draw-as-sprite  ( bitmap# - )
-    bmp ?dup if
+    bitmap @ ?dup if
         ix s>f iy s>f iw s>f ih s>f
         x p>f floor y p>f floor flip al_draw_bitmap_region
     then
@@ -400,8 +359,8 @@ constant /TILEMAP
 : tm-vcols  tm.w tm.tw / 1 + ;
 
 : draw-as-tilemap  ( - )
-    tm.bmp# bmp
-    0 locals| t b |
+    tm.bmp# bitmap @
+    0 | t b |
     b 0 = if exit then
     tm.base 0 = if exit then
     b al_get_bitmap_width tm.tw / to tcols
@@ -444,13 +403,11 @@ constant /TILEMAP
 
 : pack-tile  ( n flip - )  24 lshift or ;
 
-
-
 : draw-tile ( tile plane x y - )
     to dy to dx
-    [[ locals| t |
-        tm.bmp# bmp ?dup if
-            tm.bmp# bmp al_get_bitmap_width tm.tw / to tcols
+    [[ | t |
+        tm.bmp# bitmap @ ?dup if
+            tm.bmp# bitmap @ al_get_bitmap_width tm.tw / to tcols
             t $ffff and tcols /mod swap tm.tw * s>f  tm.th * s>f 
             tm.tw s>f  tm.th s>f  dx s>f  dy s>f  t 24 rshift al_draw_bitmap_region
         then

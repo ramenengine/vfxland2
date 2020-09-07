@@ -10,7 +10,7 @@ pgetset counter counter!
 
 : frame  ( .counter adr - ix iy )
     dup @ >r cell+ swap p>s r> mod cells + @
-    bmp# bmp bmpw iw / /mod ih * swap iw * swap 
+    bmp# bitmap @ bmpw iw / /mod ih * swap iw * swap 
 ;
 
 : ixy!  iy! ix! ;

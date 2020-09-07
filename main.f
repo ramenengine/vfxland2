@@ -1,17 +1,20 @@
 empty only forth definitions
-include lib/gl1pre        \ Load prelude of game lib
+include lib/fixed.f
+include lib/roger.f
+include lib/stackarray.f
+include lib/game.f
 require keys.f            \ Key code constants
 require lib/filelib.f     \ File ops
 require utils.f           \ Miscellanea that I'm used to
 require input.f           \ Standard input polling (kb and mouse)
 require scene.f           \ Scene system; tilemaps, objects, tileset data
-include scenes            \ Define scenes
+include scenes.f          \ Define scenes
 require script.f          \ Object scripting system
-include scripts           \ Load scripts (define behavior for game objects)
-include config            \ Configure the game core
+include scripts.f         \ Load scripts (define behavior for game objects)
+include config.f          \ Configure the game core
 
 
-include lib/gl1post       \ Load epilogue of game lib; startup, main loop, shutdown
+include lib/go.f          \ Load epilogue of game lib; startup, main loop, shutdown
 init
 
 0 object as

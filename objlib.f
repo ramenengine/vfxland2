@@ -13,3 +13,10 @@ require utils.f
 ;
 
 : dismiss  ( object - ) [[ 0 en! 0 id! ]] ;
+
+: call  >r ; 
+
+: shout>  ( - <code> )
+    r> max-objects 0 do
+        i object [[ en if dup >r call r> then ]]
+    loop drop ;
