@@ -1,18 +1,22 @@
+empty
+
 include lib/fixed.f
+include lib/pv2d.f
 include lib/roger.f
 include lib/stackarray.f
 include lib/game.f
 
-require keys.f
-require input.f
-require lib/strout.f
-require lib/a.f
-require scene.f
-require script.f
-require utils.f
-require objlib.f
-require tileutils.f
-require lib/undo.f
+require lib/scene.f
+require lib/script.f
+
+require ed/undo.f
+require ed/a.f
+require ed/strout.f
+require ed/keys.f
+require ed/input.f
+require ed/utils.f
+require ed/objlib.f
+require ed/tileutils.f
 
 : ext: postpone \\ ;
 : frnd  65535e f* f>s choose s>f 65535e f/ ;
@@ -33,7 +37,7 @@ defer objed-ext   \ adds additional events to the OBJED mode
     ' noop is objed-ext
 
 defer render-sprites
-    ' draw-sprites is render-sprites
+    ' paint is render-sprites
 
 create tile-selection 0 , 0 , 1 , 1 ,  \ col , row , #cols , #rows , 
 
@@ -73,7 +77,7 @@ create tsel /tilemap /allot     \ describes selection source
 : there  maus colrow ;
 : tilexy  the-plane [[ swap tm.tw * swap tm.th * ]] ;
 : scroll-  swap scrollx - swap scrolly - ;
-: the-tile   there the-plane find-tile ; 
+: the-tile   there the-plane tile ; 
 
 : cta  \ Cover Tristan's Ass: add undo history for the area under the selection
     tbrush [[ tm.dims * 1 = if
@@ -113,7 +117,7 @@ create tsel /tilemap /allot     \ describes selection source
     the-bmp# bitmap @ bmpw the-plane 's tm.tw /
         | tcols #rows #cols t# |
     #cols #rows tbrush resize-tilemap 
-    #rows 0 do #cols 0 do  i j tcols * + t# + i j tbrush find-tile !
+    #rows 0 do #cols 0 do  i j tcols * + t# + i j tbrush tile !
     loop loop 
 ;
 
@@ -545,7 +549,7 @@ randomize
         then
     then ]]
     max-objects 0 do
-        i prefab [[ en if bmp# draw-as-sprite then ]]
+        i prefab [[ en if bmp# draw then ]]
     loop
 ;
 
