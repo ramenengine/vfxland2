@@ -9,7 +9,7 @@
     2x cls 
     bgp1 [[ draw-as-tilemap ]] 
     bgp2 [[ draw-as-tilemap ]] 
-    draw-sprites
+    paint
 ;
 
 :while game step

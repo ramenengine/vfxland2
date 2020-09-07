@@ -96,32 +96,45 @@ constant /SCENE
 
 : ;scene ]] ;
 
-: iol-path  ( scene ) z" data/levels/" z$ swap 's s.zname z+  +z" .iol" ;
-\ : tad-path  ( layer ) 's l.bmp# zbmp-file zcount 4 - s>z +z" .tad" ;
+: iol-path  ( scene - zstr )
+    z" data/levels/" z$ swap 's s.zname z+  +z" .iol" ;
+
+: tad-path  ( layer - zstr )
+    's l.bmp# zbmp-file zcount 4 - s>z +z" .tad" ;
+
+: [load-tm]  {: i :}
+    l.zstm @  l.zstm zcount FileExist?  and if
+        l.zstm i bgp load-stm
+    else
+        i bgp [[
+            256 tm.cols! 256 tm.rows!
+            256 cells tm.stride!
+            me clear-tilemap
+        ]]
+    then
+;
+
+: [load-tad]
+    l.bmp# bitmap @ if
+        my tad-path ?exist if
+            r/o[ 0 l.bmp# tileattrs /tileattrs read ]file
+        then
+    then
+;
+
+: [load-objects]
+    my iol-path ?exist if load-iol else clear-objects then ;
 
 : load  ( n )
     scene [[
         4 0 do i s.layer [[
             l.tw l.th i bgp [[ tm.th! tm.tw! ]]
-            l.zstm @ l.zstm zcount FileExist? and if
-                l.zstm i bgp load-stm
-            else
-                i bgp [[
-                    256 tm.cols! 256 tm.rows!
-                    256 cells tm.stride!
-                    me clear-tilemap
-                ]]
-            then            
-\            l.bmp# bmp if
-\                my tad-path ?exist if
-\                    r/o[ 0 l.bmp# tileattrs /tileattrs read ]file
-\                then
-\            then
+            i [load-tm]
+            \ [load-tad]
         ]] loop
-        my iol-path ?exist if load-iol else clear-objects then
+        [load-objects]
     ]]
 ;
-
 
 : .scenes
     [ lenof scene ]# 0 do

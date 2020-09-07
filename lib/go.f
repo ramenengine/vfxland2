@@ -3,15 +3,17 @@
     al_uninstall_system
 ;
 : empty  shutdown empty ;
+: render
+    me >r update r> to me
+    present
+;
 : go
     kbs0 /ALLEGRO_KEYBOARD_STATE erase
     kbs1 /ALLEGRO_KEYBOARD_STATE erase
     al_uninstall_keyboard  al_install_keyboard drop
     queue al_get_keyboard_event_source al_register_event_source
     begin
-        me >r update r> to me
-        display al_flip_display
-        \ [ dev ] [if] pause pause pause [then]
+        render
         [ dev ] [if] flushOP-gen drop pause [then]
         kbs0 kbs1 /ALLEGRO_KEYBOARD_STATE move
         kbs0 al_get_keyboard_state
@@ -31,6 +33,7 @@
 ;
 dev fullscreen not and mswin and [if]
     : go
+        +audio
         display al_get_win_window_handle SetForegroundWindow drop
         go
         vfx-hwnd SetForegroundWindow drop

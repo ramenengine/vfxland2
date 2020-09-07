@@ -2,7 +2,7 @@
     64 16 * dup s.h! s.w!
     0 s.layer [[
         1 l.bmp#!
-        25 % l.parax! 25 % l.paray!
+        1 4 p/ l.parax! 1 4 p/ l.paray!
         z" data/test.tiles.png" l.zbmp!
         z" data/levels/test.test.layer-1.map001.stm" l.zstm!
     ]]

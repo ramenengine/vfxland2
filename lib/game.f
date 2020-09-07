@@ -45,7 +45,6 @@ create kbs0 /ALLEGRO_KEYBOARD_STATE allot&erase
 create kbs1 /ALLEGRO_KEYBOARD_STATE allot&erase
 create ms0 /ALLEGRO_MOUSE_STATE allot&erase
 create ms1 /ALLEGRO_MOUSE_STATE allot&erase
-create ms2 /ALLEGRO_MOUSE_STATE allot&erase
 0 value mixer
 0 value voice
 create mi /ALLEGRO_MONITOR_INFO allot&erase
@@ -161,7 +160,9 @@ value /screen
 : etype  ( - ALLEGRO_EVENT_TYPE )  alevt ALLEGRO_EVENT.type @ ;
 : keycode  alevt KEYBOARD_EVENT.keycode @ ;
 : unichar  alevt KEYBOARD_EVENT.unichar @ ;
-    
+
+: present  display al_flip_display ;
+
 \ --------------------------------------------------------------
 
 0 value me
@@ -284,22 +285,21 @@ game
 : fcolor  ( f: r g b )  to fgb to fgg to fgr ;
 : falpha  ( f: a )  to fga ;
 
-: draw-as-sprite  ( bitmap# - )
-    bitmap @ ?dup if
+: draw  ( - )
+    bmp# bitmap @ ?dup if
         ix s>f iy s>f iw s>f ih s>f
-        x p>f floor y p>f floor flip al_draw_bitmap_region
+        x pfloor p>f y pfloor p>f flip al_draw_bitmap_region
     then
 ;
 
-: draw-sprites ( - )
+: paint ( - )
     1 al_hold_bitmap_drawing
     max-objects 0 do
         i object as
-        en if bmp# draw-as-sprite then
+        en if draw then
     loop
     0 al_hold_bitmap_drawing
 ;
-
 
 : 2x
     2 p to zoom
@@ -320,11 +320,11 @@ game
 /OBJECT
     getset tm.w tm.w!              \ display box in pixels 
     getset tm.h tm.h!
-    getset tm.rows tm.rows!         \ total rows and cols in tiles
+    getset tm.rows tm.rows!        \ total rows and cols in tiles
     getset tm.cols tm.cols!
-    getset tm.bmp# tm.bmp#!         \ bitmap index
-    getset tm.stride tm.stride!     \ row stride in bytes
-    getset tm.base tm.base!         \ address
+    getset tm.bmp# tm.bmp#!        \ bitmap index
+    getset tm.stride tm.stride!    \ row stride in bytes
+    getset tm.base tm.base!        \ address
     getset tm.tw tm.tw!            \ tile size
     getset tm.th tm.th!
     getset tm.scrollx tm.scrollx!  \ scroll coords in pixels
@@ -337,14 +337,14 @@ constant /TILEMAP
     vieww tm.w! viewh tm.h!        \ default dimensions
 ;
 
-: plane:  ( w h - <name> )  \ w and h in tiles and defines the buffer size
+: plane:  ( w h - <name> )  \ w and h are in tiles; determine the buffer size
     create here [[ /tilemap /allot
     init-tilemap
     2dup tm.cols! tm.rows!
     2dup * cells allotment tm.base!
     drop cells tm.stride!
     tm.h viewh min tm.h!
-    tm.w vieww min tm.w!    
+    tm.w vieww min tm.w! 
 ;
 
 : ;plane  ]] ;
@@ -361,8 +361,8 @@ constant /TILEMAP
 : draw-as-tilemap  ( - )
     tm.bmp# bitmap @
     0 | t b |
-    b 0 = if exit then
-    tm.base 0 = if exit then
+    b 0= if exit then
+    tm.base 0= if exit then
     b al_get_bitmap_width tm.tw / to tcols
     
     1 al_hold_bitmap_drawing
@@ -414,13 +414,13 @@ constant /TILEMAP
     ]]
 ;
 
-: find-tile ( col row tilemap -- adr )
+: tile ( col row tilemap -- adr )
     [[ tm.stride * swap cells + tm.base + ]] ;
 
 \ ---------------------------------------------------------------
 
 :while game update
-    2x 0e 0e 0e 1e fcolor cls draw-sprites
+    2x 0e 0e 0e 1e fcolor cls paint
 ;
 
 \ ---------------------------------------------------------------

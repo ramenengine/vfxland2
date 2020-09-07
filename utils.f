@@ -1,3 +1,4 @@
+
 synonym | locals|
 synonym & addr immediate
 : ]#  ] postpone literal ;
@@ -43,3 +44,12 @@ create pen 0 , 0 ,
 : type  ?dup if type else drop then ;
 
 
+: +xy  y + y! x + x! ;
+
+: ixy!  iy! ix! ;
+
+: frame  ( n bmp# - ix iy )
+    bitmap @ bmpw iw / /mod ih * swap iw * swap ;
+
+: near?  ( obj n - f )
+    over if >r 's xy xy pdist r> p <= else drop then ;

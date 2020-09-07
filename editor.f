@@ -68,14 +68,6 @@ create tsel /tilemap /allot     \ describes selection source
 : the-stride the-plane 's tm.stride ;
 : the-bmp#   the-plane 's tm.bmp# ;
 
-\        fmouse >v zoom uv/ the-plane 's scrollxy v+ v>
-\        >v tm.twh v/ vtrunc v>
-\        >v tm.twh v* v>
-\        >v scrollxy v- v>
-
-\        fmouse >v zoom uv/ the-plane 's scrollxy v+
-\        tm.twh v/ vtrunc tm.twh v* scrollxy v- v>
-
 : maus  mouse zoom p/ swap zoom p/ swap scrollx scrolly 2+ ;
 : colrow  the-plane [[ swap tm.tw / swap tm.th / ]] ;
 : there  maus colrow ;

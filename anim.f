@@ -8,10 +8,13 @@ pgetset counter counter!
 
 ( TODO: could be optimized with a "bmpcols" array )
 
-: frame  ( .counter adr - ix iy )
-    dup @ >r cell+ swap p>s r> mod cells + @
+: aframe  ( .counter anim - ix iy )
+    swap p>s | frame# anim |
+    anim cell+ frame# anim @ mod cells + @
     bmp# bitmap @ bmpw iw / /mod ih * swap iw * swap 
 ;
 
 : ixy!  iy! ix! ;
 
+: animate  ( anim .speed - )
+    swap +counter   counter swap aframe ixy! ;
