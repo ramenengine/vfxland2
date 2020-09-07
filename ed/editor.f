@@ -370,7 +370,7 @@ randomize
         shift? lb-letgo and if
             mouse-tile tile-selection 8 + 2@ swap pick-tiles
         then
-        ms0 lb-pressed  shift? not and if
+        lb-pressed  shift? not and if
             mouse-tile tile-selection 8 + 2@ swap pick-tiles
         then
         ms0 2 al_mouse_button_down if
@@ -521,9 +521,10 @@ randomize
     then
     
     <del> pressed if
-        ctr
-        selected 's en if selected dismiss then
-        0 to selected
+        selected if 
+            selected 's en if ctr selected dismiss then
+            0 to selected
+        then
     then
     
     <z> pressed ctrl? and if undo then
@@ -549,7 +550,7 @@ randomize
         then
     then ]]
     max-objects 0 do
-        i prefab [[ en if bmp# draw then ]]
+        i prefab [[ en if draw then ]]
     loop
 ;
 
